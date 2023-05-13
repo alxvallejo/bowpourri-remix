@@ -44,6 +44,7 @@ export default function TriviaIndex() {
   const [minPlayers, setMinPlayers] = useState();
   const [showOptions, setShowOptions] = useState(false);
   const [optionMinPlayers, setOptionMinPlayers] = useState();
+  const [answerContext, setAnswerContext] = useState();
 
   const { socket } = useOutletContext();
 
@@ -150,6 +151,7 @@ export default function TriviaIndex() {
     socket.on('resetGame', handleResetGame);
     socket.on('userCategories', handleUserCategories);
     socket.on('gameRules', handleGameRules);
+    socket.on('answerContext', setAnswerContext);
   }, [socket]);
 
   useEffect(() => {
@@ -365,16 +367,18 @@ export default function TriviaIndex() {
       const isCorrect = correctAnswer.option == selectedOption;
       if (isCorrect) {
         return (
-          <div>
-            <h2>Congratulations!</h2>
+          <div className='prose lg:prose-md'>
+            <h2 className='text-success'>Congratulations!</h2>
             <div>Correct Answer: {correctAnswer.option}</div>
+            <div>{answerContext}</div>
           </div>
         );
       } else {
         return (
-          <div>
-            <h3>Sorry, you are incorrect.</h3>
+          <div className='prose lg:prose-md'>
+            <h3 className='text-info'>Sorry, you are incorrect.</h3>
             <div>Correct Answer: {correctAnswer.option}</div>
+            <div>{answerContext}</div>
           </div>
         );
       }
