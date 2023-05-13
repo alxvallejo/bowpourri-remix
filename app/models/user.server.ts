@@ -1,67 +1,79 @@
-import type { Password, User } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcrypt from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
+import invariant from 'tiny-invariant';
 
-import { prisma } from "~/db.server";
+export type User = { id: string; email: string };
 
-export type { User } from "@prisma/client";
+// Abstract this away
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-export async function getUserById(id: User["id"]) {
-  return prisma.user.findUnique({ where: { id } });
-}
+invariant(
+  supabaseUrl,
+  'SUPABASE_URL must be set in your environment variables.'
+);
+invariant(
+  supabaseAnonKey,
+  'SUPABASE_ANON_KEY must be set in your environment variables.'
+);
 
-export async function getUserByEmail(email: User["email"]) {
-  return prisma.user.findUnique({ where: { email } });
-}
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function createUser(
-  email: User["email"],
+  email: string,
   name: string,
   password: string
 ) {
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  return prisma.user.create({
-    data: {
-      email,
-      name,
-      password: {
-        create: {
-          hash: hashedPassword,
-        },
-      },
-    },
-  });
-}
-
-export async function deleteUserByEmail(email: User["email"]) {
-  return prisma.user.delete({ where: { email } });
-}
-
-export async function verifyLogin(
-  email: User["email"],
-  password: Password["hash"]
-) {
-  const userWithPassword = await prisma.user.findUnique({
-    where: { email },
-    include: {
-      password: true,
-    },
-  });
-
-  if (!userWithPassword || !userWithPassword.password) {
-    return null;
-  }
-
-  const isValid = await bcrypt.compare(
+  const { data, error } = await supabase.auth.signUp({
+    email,
     password,
-    userWithPassword.password.hash
-  );
+  });
+  const { user } = data;
 
-  if (!isValid) {
-    return null;
-  }
+  // get the user profile after created
+  const profile = await getProfileByEmail(user?.email);
 
-  const { password: _password, ...userWithoutPassword } = userWithPassword;
+  // Update profile with name
+  const { data: updatedProfile, error: updateError } = await supabase
+    .from('profiles')
+    .update({ name })
+    .eq('id', profile?.id)
+    .single();
 
-  return userWithoutPassword;
+  return user;
+}
+
+export async function getProfileById(id: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('email, name, score, id')
+    .eq('id', id)
+    .single();
+
+  if (error) return null;
+  if (data) return { id: data.id, email: data.email };
+}
+
+export async function getProfileByEmail(email?: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('email, name, score, id')
+    .eq('email', email)
+    .single();
+
+  if (error) return null;
+  if (data) return data;
+}
+
+export async function verifyLogin(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  const { user } = data;
+
+  if (error) return undefined;
+  const profile = await getProfileByEmail(user?.email);
+
+  return profile;
 }
