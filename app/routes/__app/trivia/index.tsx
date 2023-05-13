@@ -1,23 +1,23 @@
-import { LoaderArgs, json } from "@remix-run/node";
-import { useLoaderData, useOutletContext } from "@remix-run/react";
-import { useState, useEffect } from "react";
-import { useUser } from "~/utils";
-import Countdown from "react-countdown";
+import { LoaderArgs, json } from '@remix-run/node';
+import { useLoaderData, useOutletContext } from '@remix-run/react';
+import { useState, useEffect } from 'react';
+import { useUser } from '~/utils';
+import Countdown from 'react-countdown';
 import {
   CheckIcon,
   CheckBadgeIcon,
   FaceFrownIcon,
   XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { categories } from "./categories";
-import { CategoryForm } from "./CategoryForm";
-import TailwindColor from "../../../tailwindColor";
+} from '@heroicons/react/24/solid';
+import { categories } from './categories';
+import { CategoryForm } from './CategoryForm';
+import TailwindColor from '../../../tailwindColor';
 
 const COUNTDOWN_SECONDS = 5;
 const ANSWER_BUFFER = 5;
 
-const tableCellBg = "bg-base-100";
-const tableContentColor = "text-neutral-content";
+const tableCellBg = 'bg-base-100';
+const tableContentColor = 'text-neutral-content';
 
 const tailwindColor = new TailwindColor(null);
 
@@ -54,7 +54,7 @@ export default function TriviaIndex() {
   };
 
   const handlePlayerScores = (newPlayerScores) => {
-    console.log("newPlayerScores: ", newPlayerScores);
+    console.log('newPlayerScores: ', newPlayerScores);
     setPlayerScores(newPlayerScores);
     setShowPlayerScores(true);
     setGameComplete(true);
@@ -75,18 +75,18 @@ export default function TriviaIndex() {
   };
 
   const handleResetGame = (msg) => {
-    console.log("msg: ", msg);
+    console.log('msg: ', msg);
     handlePlayAgain();
   };
 
   const handleCategory = (name, newCategory) => {
-    console.log("newCategory: ", newCategory);
+    console.log('newCategory: ', newCategory);
     setCategorySelector(name);
     setSelectedCategory(newCategory);
   };
 
   const handleUserScores = (userScores) => {
-    console.log("userScores: ", userScores);
+    console.log('userScores: ', userScores);
     setPlayerScores(userScores);
   };
 
@@ -106,23 +106,23 @@ export default function TriviaIndex() {
       return groups;
     }, {});
     setUserCategories(groups);
-    console.log("groups: ", groups);
+    console.log('groups: ', groups);
   };
 
   useEffect(() => {
     if (!playerStats) {
-      socket.emit("playerStats");
+      socket.emit('playerStats');
     }
   }, [playerStats]);
 
   const handleNewGame = (newGame) => {
-    console.log("newGame: ", newGame);
+    console.log('newGame: ', newGame);
     setSelectedCategory(newGame.category);
     setNewGame(newGame);
   };
 
   const handleGameRules = (rules) => {
-    console.log("rules: ", rules);
+    console.log('rules: ', rules);
     if (rules) {
       setMinPlayers(rules?.min_players);
       setOptionMinPlayers(rules?.min_players);
@@ -133,31 +133,31 @@ export default function TriviaIndex() {
     if (!socket) {
       return;
     }
-    socket.on("message", (msg) => {
-      console.log("msg: ", msg);
+    socket.on('message', (msg) => {
+      console.log('msg: ', msg);
     });
-    socket.on("userScores", handleUserScores);
-    socket.on("players", setPlayers);
-    socket.on("category", handleCategory);
-    socket.on("newGame", handleNewGame);
-    socket.on("newGameError", setNewGameError);
-    socket.on("playerScores", handlePlayerScores);
-    socket.on("playerScoreError", setPlayerScoreError);
-    socket.on("playerStats", handlePlayerStats);
-    socket.on("answer", setCorrectAnswer);
-    socket.on("answerImg", setAnswerImg);
-    socket.on("signOut", onSignOut);
-    socket.on("resetGame", handleResetGame);
-    socket.on("userCategories", handleUserCategories);
-    socket.on("gameRules", handleGameRules);
+    socket.on('userScores', handleUserScores);
+    socket.on('players', setPlayers);
+    socket.on('category', handleCategory);
+    socket.on('newGame', handleNewGame);
+    socket.on('newGameError', setNewGameError);
+    socket.on('playerScores', handlePlayerScores);
+    socket.on('playerScoreError', setPlayerScoreError);
+    socket.on('playerStats', handlePlayerStats);
+    socket.on('answer', setCorrectAnswer);
+    socket.on('answerImg', setAnswerImg);
+    socket.on('signOut', onSignOut);
+    socket.on('resetGame', handleResetGame);
+    socket.on('userCategories', handleUserCategories);
+    socket.on('gameRules', handleGameRules);
   }, [socket]);
 
   useEffect(() => {
     return () => {
-      console.log("Disconnect on tab close");
+      console.log('Disconnect on tab close');
       // Remove yourself from players list
-      console.log("userData on disconnect: ", userData);
-      socket.emit("signOut", userData?.email);
+      console.log('userData on disconnect: ', userData);
+      socket.emit('signOut', userData?.email);
       // socket.off("userScores", handleUserScores);
       // socket.off("players", setPlayers);
       // socket.off("category", setSelectedCategory);
@@ -175,7 +175,7 @@ export default function TriviaIndex() {
 
   useEffect(() => {
     if (user) {
-      console.log("user: ", user);
+      console.log('user: ', user);
       setUserData({
         email: user.email,
         name: user.name,
@@ -185,7 +185,7 @@ export default function TriviaIndex() {
   }, [user]);
 
   useEffect(() => {
-    console.log("players: ", players);
+    console.log('players: ', players);
     if (players && players.find((x) => x.email == user.email)) {
       setSignedIn(true);
     } else {
@@ -195,22 +195,22 @@ export default function TriviaIndex() {
 
   useEffect(() => {
     if (selectedOption && userData) {
-      socket.emit("answer", userData.email, selectedOption);
+      socket.emit('answer', userData.email, selectedOption);
     }
   }, [selectedOption, userData]);
 
   const handleSignIn = () => {
     if (userData) {
-      console.log("userData: ", userData);
-      socket.emit("signIn", userData);
+      console.log('userData: ', userData);
+      socket.emit('signIn', userData);
     }
   };
 
   const StartTriviaCard = () => {
     return (
-      <div className="card prose w-96">
+      <div className='card prose w-96'>
         <h1>Bowpourri</h1>
-        <button onClick={handleSignIn} className="btn-primary btn">
+        <button onClick={handleSignIn} className='btn-primary btn'>
           Join Game!
         </button>
       </div>
@@ -218,26 +218,24 @@ export default function TriviaIndex() {
   };
 
   const handleCountdown = ({ seconds, completed }) => {
-    console.log("newGame: ", newGame);
+    console.log('newGame: ', newGame);
     if ((completed || countdownCompleted) && newGame) {
       return (
-        <div className="prose flex flex-col items-start">
+        <div className='prose flex flex-col items-start'>
           Today's question:
-          <h3 className="border-r-ghost p-5 text-secondary">
-            {newGame.question}
-          </h3>
+          <h3 className='border-r-ghost p-5 text-accent'>{newGame.question}</h3>
           {newGame.options.map((option, i) => {
             return (
-              <div className="form-control" key={i}>
-                <label className="label cursor-pointer">
+              <div className='form-control' key={i}>
+                <label className='label cursor-pointer'>
                   <input
-                    type="radio"
-                    name="radio-10"
-                    className="radio mr-4 checked:bg-blue-500"
+                    type='radio'
+                    name='radio-10'
+                    className='radio mr-4 radio-lg radio-accent'
                     onChange={() => setSelectedOption(option)}
                     checked={selectedOption == option}
                   />
-                  <span className="label-text">{option}</span>
+                  <span className='label-text text-lg'>{option}</span>
                 </label>
               </div>
             );
@@ -272,7 +270,7 @@ export default function TriviaIndex() {
       <button
         key={key}
         className={className}
-        onClick={() => socket.emit("category", name, category.label)}
+        onClick={() => socket.emit('category', name, category.label)}
         disabled={isDisabled}
       >
         {category.label}
@@ -288,7 +286,7 @@ export default function TriviaIndex() {
       <button
         key={key}
         className={className}
-        onClick={() => socket.emit("category", name, categoryName)}
+        onClick={() => socket.emit('category', name, categoryName)}
         disabled={isDisabled}
       >
         {categoryName}
@@ -312,7 +310,7 @@ export default function TriviaIndex() {
         : categories;
       if (selectedCategory) {
         return (
-          <div className="prose">
+          <div className='prose'>
             <h3>
               {categorySelector} chose {selectedCategory}
             </h3>
@@ -323,23 +321,23 @@ export default function TriviaIndex() {
       return (
         <div>
           Choose a category:
-          <div className="flex flex-row flex-wrap items-start">
+          <div className='flex flex-row flex-wrap items-start'>
             {filteredCategories.map((cat, i) => {
               return <CategoryCard key={i} category={cat} />;
             })}
           </div>
-          <div className="card prose text-center">
-            <div className="card-body">
+          <div className='card prose text-center'>
+            <div className='card-body'>
               {Object.entries(userCategories).map(
                 ([userName, userCats], index) => {
                   const randomColor = tailwindColor.pick();
                   return (
                     <div
-                      className="card flex-row items-start justify-start text-center"
+                      className='card flex-row items-start justify-start text-center'
                       key={index}
                     >
-                      <div className="card-title w-0">{userName}</div>
-                      <div className="card-body flex-row items-start justify-start">
+                      <div className='card-title w-0'>{userName}</div>
+                      <div className='card-body flex-row items-start justify-start'>
                         {userCats.map((cat, i) => {
                           return (
                             <UserCategoryCard
@@ -402,20 +400,20 @@ export default function TriviaIndex() {
 
   const PlayerStatus = ({ player }) => {
     const { name, email, answered, playerData, isCorrect } = player;
-    console.log("player: ", player);
+    console.log('player: ', player);
     let answerIcon;
     if (correctAnswer) {
       // const isCorrect = correctAnswer.option == selectedOption;
       if (isCorrect == true) {
-        answerIcon = <CheckBadgeIcon className="h-6 w-6 text-green-500" />;
+        answerIcon = <CheckBadgeIcon className='h-6 w-6 text-green-500' />;
       } else if (isCorrect == false) {
-        answerIcon = <FaceFrownIcon className="text-warning-500 h-6 w-6" />;
+        answerIcon = <FaceFrownIcon className='text-warning-500 h-6 w-6' />;
       }
     } else if (answered) {
-      answerIcon = <CheckIcon className="h-6 w-6 text-green-500" />;
+      answerIcon = <CheckIcon className='h-6 w-6 text-green-500' />;
     }
     return (
-      <div className="flex">
+      <div className='flex'>
         {name} {answerIcon}
       </div>
     );
@@ -440,7 +438,7 @@ export default function TriviaIndex() {
       return b.score - a.score;
     });
     return (
-      <div className="card w-96">
+      <div className='card w-96'>
         <table className={`table-compact table w-full ${tableContentColor}`}>
           <thead>
             <tr>
@@ -463,13 +461,13 @@ export default function TriviaIndex() {
 
   const GameActions = () => {
     return (
-      <div className="card mt-4 w-full bg-neutral md:basis-1/4">
+      <div className='card mt-4 w-full bg-neutral md:basis-1/4'>
         {/* <button className="btn-secondary btn" onClick={handleSignOut}>
           Sign Out
         </button> */}
 
         {gameComplete && (
-          <button className="btn-primary btn" onClick={handlePlayAgain}>
+          <button className='btn-primary btn' onClick={handlePlayAgain}>
             Play Again
           </button>
         )}
@@ -479,14 +477,14 @@ export default function TriviaIndex() {
 
   const handleSaveCategory = async (category) => {
     if (!userData?.name) {
-      console.log("no userData", userData);
+      console.log('no userData', userData);
     }
-    socket.emit("addCategory", category, userData?.name);
+    socket.emit('addCategory', category, userData?.name);
   };
 
   const editMinPlayers = () => {
     if (optionMinPlayers && optionMinPlayers > 0) {
-      socket.emit("editMinPlayers", optionMinPlayers);
+      socket.emit('editMinPlayers', optionMinPlayers);
     }
   };
 
@@ -495,54 +493,54 @@ export default function TriviaIndex() {
     setOptionMinPlayers(newVal);
   };
 
-  const playerScoreModalClass = showPlayerScores ? "modal modal-open" : "modal";
-  const optionsModalClass = showOptions ? "modal modal-open" : "modal";
+  const playerScoreModalClass = showPlayerScores ? 'modal modal-open' : 'modal';
+  const optionsModalClass = showOptions ? 'modal modal-open' : 'modal';
 
   const yourCategories = userCategories?.[userData?.name];
 
   return (
     <>
-      <div className="container mx-auto">
-        <div className="flex flex-wrap justify-between">
-          <div className="basis-3/4 pr-6">
+      <div className='container mx-auto'>
+        <div className='flex flex-wrap justify-between'>
+          <div className='basis-3/4 pr-6'>
             {!signedIn ? <StartTriviaCard /> : <SelectCategoryCard />}
-            {selectedCategory ? <ShowQuestion /> : ""}
+            {selectedCategory ? <ShowQuestion /> : ''}
             {newGame && unanswered.length > 0 ? (
               <div>
-                Waiting on: {unanswered.map((p, i) => p.name).join(", ")}
+                Waiting on: {unanswered.map((p, i) => p.name).join(', ')}
               </div>
             ) : (
               <ShowAnswer />
             )}
-            {answerImg && <img src={answerImg} alt="answer-img" />}
+            {answerImg && <img src={answerImg} alt='answer-img' />}
           </div>
-          <div className="basis-1/4">
-            <div className="card border-accent bg-base-200 text-accent">
-              <div className="card-body">
-                <div className="flex items-start justify-start ">
-                  <div className="w-100 card-title flex-1 flex-row justify-between">
+          <div className='basis-1/4'>
+            <div className='card border-accent bg-base-200 text-accent'>
+              <div className='card-body'>
+                <div className='flex items-start justify-start '>
+                  <div className='w-100 card-title flex-1 flex-row justify-between'>
                     <h2>Players</h2>
                     <button
-                      className="btn-sm btn-square btn"
+                      className='btn-sm btn-square btn'
                       onClick={() => setShowOptions(true)}
                     >
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
+                        xmlns='http://www.w3.org/2000/svg'
+                        fill='none'
+                        viewBox='0 0 24 24'
                         strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="h-6 w-6"
+                        stroke='currentColor'
+                        className='h-6 w-6'
                       >
                         <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 016.336-4.486l-3.276 3.276a3.004 3.004 0 002.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852z"
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          d='M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 016.336-4.486l-3.276 3.276a3.004 3.004 0 002.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852z'
                         />
                         <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4.867 19.125h.008v.008h-.008v-.008z"
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          d='M4.867 19.125h.008v.008h-.008v-.008z'
                         />
                       </svg>
                     </button>
@@ -567,54 +565,54 @@ export default function TriviaIndex() {
             </div>
 
             <GameActions />
-            {gameComplete ? <div>Game Complete</div> : ""}
+            {gameComplete ? <div>Game Complete</div> : ''}
           </div>
         </div>
         <div className={playerScoreModalClass}>
-          <div className="modal-box relative">
+          <div className='modal-box relative'>
             <label
-              className="btn-sm btn-circle btn absolute right-2 top-2"
+              className='btn-sm btn-circle btn absolute right-2 top-2'
               onClick={() => setShowPlayerScores(false)}
             >
               ✕
             </label>
-            <h3 className="text-lg font-bold">Winner's Circle</h3>
+            <h3 className='text-lg font-bold'>Winner's Circle</h3>
             <PlayerScores />
           </div>
         </div>
         <div className={optionsModalClass}>
-          <div className="modal-box relative">
+          <div className='modal-box relative'>
             <label
-              className="btn-sm btn-circle btn absolute right-2 top-2"
+              className='btn-sm btn-circle btn absolute right-2 top-2'
               onClick={() => setShowOptions(false)}
             >
               ✕
             </label>
-            <h3 className="text-lg font-bold">Options</h3>
-            <div className="p-5">
-              <div className="form-control">
+            <h3 className='text-lg font-bold'>Options</h3>
+            <div className='p-5'>
+              <div className='form-control'>
                 {minPlayers && (
                   <input
-                    type="number"
-                    className="input-bordered input"
+                    type='number'
+                    className='input-bordered input'
                     // defaultValue={optionMinPlayers}
                     value={optionMinPlayers}
                     onChange={handleMinPlayerOptionUpdate}
                   />
                 )}
 
-                <label className="label">
-                  <span className="label-text-alt">Min Players</span>
+                <label className='label'>
+                  <span className='label-text-alt'>Min Players</span>
                 </label>
               </div>
-              <div className="btn-accent btn" onClick={editMinPlayers}>
+              <div className='btn-accent btn' onClick={editMinPlayers}>
                 Save
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="btm-nav btm-nav-lg h-auto p-5">
+      <div className='btm-nav btm-nav-lg h-auto p-5'>
         <div>
           {!newGame && <CategoryForm handleSaveCategory={handleSaveCategory} />}
         </div>
@@ -624,16 +622,16 @@ export default function TriviaIndex() {
             return (
               <button
                 key={i}
-                className="btn-sm btn gap-2"
-                onClick={() => socket.emit("deleteCategory", yourCategory.id)}
+                className='btn-sm btn gap-2'
+                onClick={() => socket.emit('deleteCategory', yourCategory.id)}
               >
                 {yourCategory.name}
-                <XMarkIcon className="h-6 w-6 text-slate-500" />
+                <XMarkIcon className='h-6 w-6 text-slate-500' />
               </button>
             );
           })}
         </div>
-        <div className="p-1">
+        <div className='p-1'>
           <PlayerScores />
         </div>
       </div>
