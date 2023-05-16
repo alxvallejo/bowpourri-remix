@@ -13,7 +13,6 @@ import { categories } from './categories';
 import { CategoryForm } from './CategoryForm';
 import TailwindColor from '../../../tailwindColor';
 
-const COUNTDOWN_SECONDS = 5;
 const ANSWER_BUFFER = 5;
 
 const tableCellBg = 'bg-base-100';
@@ -45,6 +44,7 @@ export default function TriviaIndex() {
   const [showOptions, setShowOptions] = useState(false);
   const [optionMinPlayers, setOptionMinPlayers] = useState();
   const [answerContext, setAnswerContext] = useState();
+  const [countdownSeconds, setCountdownSeconds] = useState(5);
 
   const { socket } = useOutletContext();
 
@@ -222,6 +222,15 @@ export default function TriviaIndex() {
   const handleCountdown = ({ seconds, completed }) => {
     console.log('newGame: ', newGame);
     if ((completed || countdownCompleted) && newGame) {
+      if (!signedIn) {
+        return (
+          <div className='prose flex flex-col items-start'>
+            <h3 className='border-r-ghost p-5 text-info'>
+              Game in progress. Click Join Game!
+            </h3>
+          </div>
+        );
+      }
       return (
         <div className='prose flex flex-col items-start'>
           Today's question:
@@ -256,7 +265,7 @@ export default function TriviaIndex() {
   };
 
   const ShowQuestion = () => {
-    const ms = COUNTDOWN_SECONDS * 1000;
+    const ms = countdownSeconds * 1000;
     return (
       <div>
         <Countdown date={Date.now() + ms} renderer={handleCountdown} />
@@ -264,13 +273,12 @@ export default function TriviaIndex() {
     );
   };
 
-  const CategoryCard = ({ category, key }) => {
+  const CategoryCard = ({ category }) => {
     const className = `btn btn-outline ${category.class} m-2`;
     const isDisabled = !!selectedCategory;
     const name = userData?.name || userData?.email;
     return (
       <button
-        key={key}
         className={className}
         onClick={() => socket.emit('category', name, category.label)}
         disabled={isDisabled}
@@ -280,13 +288,13 @@ export default function TriviaIndex() {
     );
   };
 
-  const UserCategoryCard = ({ categoryName, color, key }) => {
+  const UserCategoryCard = ({ categoryName, color }) => {
+    console.log('color: ', color);
     const className = `btn btn-outline ${color} m-2`;
     const isDisabled = !!selectedCategory;
     const name = userData?.name || userData?.email;
     return (
       <button
-        key={key}
         className={className}
         onClick={() => socket.emit('category', name, categoryName)}
         disabled={isDisabled}
@@ -483,10 +491,11 @@ export default function TriviaIndex() {
     if (!userData?.name) {
       console.log('no userData', userData);
     }
+    // return;
     socket.emit('addCategory', category, userData?.name);
   };
 
-  const editMinPlayers = () => {
+  const editOptions = () => {
     if (optionMinPlayers && optionMinPlayers > 0) {
       socket.emit('editMinPlayers', optionMinPlayers);
     }
@@ -595,6 +604,9 @@ export default function TriviaIndex() {
             <h3 className='text-lg font-bold'>Options</h3>
             <div className='p-5'>
               <div className='form-control'>
+                <label className='label'>
+                  <span className='label-text-alt'>Min Players</span>
+                </label>
                 {minPlayers && (
                   <input
                     type='number'
@@ -604,13 +616,23 @@ export default function TriviaIndex() {
                     onChange={handleMinPlayerOptionUpdate}
                   />
                 )}
-
-                <label className='label'>
-                  <span className='label-text-alt'>Min Players</span>
-                </label>
               </div>
-              <div className='btn-accent btn' onClick={editMinPlayers}>
-                Save
+              <div className='form-control'>
+                <label className='label'>
+                  <span className='label-text-alt'>Countdown Seconds</span>
+                </label>
+                <input
+                  type='number'
+                  className='input-bordered input'
+                  // defaultValue={optionMinPlayers}
+                  value={countdownSeconds}
+                  onChange={(e) => setCountdownSeconds(e.target.value)}
+                />
+              </div>
+              <div className='mt-5'>
+                <div className='btn-accent btn' onClick={editOptions}>
+                  Save
+                </div>
               </div>
             </div>
           </div>

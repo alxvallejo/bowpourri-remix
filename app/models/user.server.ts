@@ -1,8 +1,7 @@
-import bcrypt from 'bcryptjs';
 import { createClient } from '@supabase/supabase-js';
 import invariant from 'tiny-invariant';
 
-export type User = { id: string; email: string };
+export type User = { id: string; name: string; email: string };
 
 // Abstract this away
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -51,7 +50,7 @@ export async function getProfileById(id: string) {
     .single();
 
   if (error) return null;
-  if (data) return { id: data.id, email: data.email };
+  if (data) return { id: data.id, name: data.name, email: data.email };
 }
 
 export async function getProfileByEmail(email?: string) {
@@ -74,6 +73,7 @@ export async function verifyLogin(email: string, password: string) {
 
   if (error) return undefined;
   const profile = await getProfileByEmail(user?.email);
+  console.log('profile: ', profile);
 
   return profile;
 }
