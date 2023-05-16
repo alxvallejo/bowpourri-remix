@@ -44,7 +44,7 @@ export default function TriviaIndex() {
   const [showOptions, setShowOptions] = useState(false);
   const [optionMinPlayers, setOptionMinPlayers] = useState();
   const [answerContext, setAnswerContext] = useState();
-  const [countdownSeconds, setCountdownSeconds] = useState(5);
+  const [countdownSeconds, setCountdownSeconds] = useState(15);
 
   const { socket } = useOutletContext();
 
@@ -310,7 +310,7 @@ export default function TriviaIndex() {
     }
     if (players.length < minPlayers) {
       return (
-        <div>
+        <div className='prose'>
           <h2>Waiting for more players...</h2>
         </div>
       );
