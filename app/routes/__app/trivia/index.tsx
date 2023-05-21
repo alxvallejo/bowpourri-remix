@@ -12,6 +12,11 @@ import {
 import { categories } from './categories';
 import { CategoryForm } from './CategoryForm';
 import TailwindColor from '../../../tailwindColor';
+import daisyThemes from 'daisyui/src/colors/themes';
+import { SpinWheel } from './spinWheel.client';
+import { ClientOnly } from 'remix-utils';
+
+console.log('daisyThemes: ', daisyThemes);
 
 const ANSWER_BUFFER = 5;
 
@@ -19,6 +24,31 @@ const tableCellBg = 'bg-base-100';
 const tableContentColor = 'text-neutral-content';
 
 const tailwindColor = new TailwindColor(null);
+
+type PlayerData = {
+  socketId: String;
+  name: String;
+  email: String;
+  answered: Boolean;
+};
+
+interface Standup {
+  players: PlayerData[];
+  nextSpinner: PlayerData | null;
+  nextWinner: String | null;
+  isComplete: Boolean;
+  isBowpourri: Boolean;
+  categorySelector: String | null | undefined;
+}
+
+const defaultStandup = {
+  players: [],
+  nextSpinner: null,
+  nextWinner: null,
+  isComplete: false,
+  isBowpourri: false,
+  categorySelector: null,
+};
 
 export default function TriviaIndex() {
   const user = useUser();
@@ -45,8 +75,26 @@ export default function TriviaIndex() {
   const [optionMinPlayers, setOptionMinPlayers] = useState();
   const [answerContext, setAnswerContext] = useState();
   const [countdownSeconds, setCountdownSeconds] = useState(15);
+  const [standup, setStandup] = useState<Standup>(defaultStandup);
+  const [themeColors, setThemeColors] = useState([]);
 
-  const { socket } = useOutletContext();
+  const { socket, currentTheme } = useOutletContext();
+
+  useEffect(() => {
+    // Determine the color palette
+
+    if (currentTheme && daisyThemes) {
+      console.log('daisyThemes: ', daisyThemes);
+      console.log('currentTheme', currentTheme);
+      const themeKey = `[data-theme=${currentTheme}]`;
+      const colorPaletteObj = daisyThemes[themeKey];
+      const colorArray = Object.values(colorPaletteObj).filter(
+        (x) => x !== 'dark'
+      );
+      console.log('colorArray: ', colorArray);
+      setThemeColors(colorArray);
+    }
+  }, [currentTheme, daisyThemes]);
 
   const onSignOut = (socketId) => {
     // Remove the corresponding player
@@ -59,6 +107,44 @@ export default function TriviaIndex() {
     setPlayerScores(newPlayerScores);
     setShowPlayerScores(true);
     setGameComplete(true);
+
+    setStandup({
+      ...standup,
+      isBowpourri: false,
+      isComplete: standup.players.length > 0,
+    });
+
+    // Spin the wheel after game is finished
+    socket.emit('handleSpin');
+  };
+
+  const handleRefreshWheel = (players, selectedSpinner) => {
+    let newStandup = {
+      players,
+      nextSpinner: selectedSpinner,
+      nextWinner: null,
+      isComplete: players.length === 0,
+      isBowpourri: false,
+      categorySelector: undefined,
+    };
+    setStandup(newStandup);
+  };
+
+  const handleSpinResults = (nextWinner: string, nextPlayers: PlayerData[]) => {
+    const isBowpourri = nextWinner === 'bowpourri';
+    const previousSpinner = standup.nextSpinner;
+    const nextSpinner = isBowpourri
+      ? null
+      : players.find((x) => x.email === nextWinner) || null;
+    console.log('nextWinner: ', nextWinner);
+    setStandup({
+      ...standup,
+      players: nextPlayers,
+      nextWinner,
+      nextSpinner,
+      isBowpourri: nextWinner === 'bowpourri',
+      categorySelector: isBowpourri ? previousSpinner?.email : null,
+    });
   };
 
   const handlePlayAgain = () => {
@@ -152,6 +238,8 @@ export default function TriviaIndex() {
     socket.on('userCategories', handleUserCategories);
     socket.on('gameRules', handleGameRules);
     socket.on('answerContext', setAnswerContext);
+    socket.on('refreshWheel', handleRefreshWheel);
+    socket.on('spinResults', handleSpinResults);
   }, [socket]);
 
   useEffect(() => {
@@ -160,17 +248,6 @@ export default function TriviaIndex() {
       // Remove yourself from players list
       console.log('userData on disconnect: ', userData);
       socket.emit('signOut', userData?.email);
-      // socket.off("userScores", handleUserScores);
-      // socket.off("players", setPlayers);
-      // socket.off("category", setSelectedCategory);
-      // socket.off("newGame", setNewGame);
-      // socket.off("newGameError", setNewGameError);
-      // socket.off("playerScores", handlePlayerScores);
-      // socket.off("playerScoreError", setPlayerScoreError);
-      // socket.off("answer", setCorrectAnswer);
-      // socket.off("signOut", onSignOut);
-      // socket.off("resetGame", handleResetGame);
-
       socket.removeAllListeners();
     };
   }, []);
@@ -212,9 +289,6 @@ export default function TriviaIndex() {
     return (
       <div className='card prose w-96'>
         <h1>Bowpourri</h1>
-        <button onClick={handleSignIn} className='btn-primary btn'>
-          Join Game!
-        </button>
       </div>
     );
   };
@@ -411,8 +485,7 @@ export default function TriviaIndex() {
   const unanswered = players.filter((x) => !x.answered);
 
   const PlayerStatus = ({ player }) => {
-    const { name, email, answered, playerData, isCorrect } = player;
-    console.log('player: ', player);
+    const { name, answered, isCorrect } = player;
     let answerIcon;
     if (correctAnswer) {
       // const isCorrect = correctAnswer.option == selectedOption;
@@ -487,6 +560,55 @@ export default function TriviaIndex() {
     );
   };
 
+  const PlayerSpinWheel = () => {
+    // const [nextPlayer, setNextPlayer] = useState();
+    if (!players || players.length < 1) {
+      return <div />;
+    }
+    const playerOptions = players.map((player, i) => {
+      return {
+        option: player.name,
+      };
+      console.log('player: ', player);
+      // return <div key={i}>{`Player ${i}`}</div>;
+    });
+    // const playerOptions = players.map((player, i) => {
+    //   return {
+    //     id: i,
+    //     image: '',
+    //     text: player.name,
+    //   };
+    //   console.log('player: ', player);
+    //   // return <div key={i}>{`Player ${i}`}</div>;
+    // });
+
+    const onStopSpin = () => {
+      console.log('whoop');
+    };
+
+    const handleSpin = () => {
+      socket.emit('handleSpin');
+    };
+
+    return (
+      <div className='container mx-auto'>
+        <div className='flex items-center justify-center h-screen'>
+          <ClientOnly fallback={<div />}>
+            {() => (
+              <SpinWheel
+                userData={userData}
+                standup={standup}
+                themeColors={themeColors}
+                handleSpin={handleSpin}
+                onStopSpin={onStopSpin}
+              />
+            )}
+          </ClientOnly>
+        </div>
+      </div>
+    );
+  };
+
   const handleSaveCategory = async (category) => {
     if (!userData?.name) {
       console.log('no userData', userData);
@@ -511,14 +633,170 @@ export default function TriviaIndex() {
 
   const yourCategories = userCategories?.[userData?.name];
 
+  const PlayerTableCard = () => {
+    return (
+      <div className='card border-accent bg-base-200 text-accent'>
+        <div className='card-body'>
+          <div className='flex items-start justify-start '>
+            <div className='w-100 card-title flex-1 flex-row justify-between'>
+              <h2>Players</h2>
+              <button
+                className='btn-sm btn-square btn'
+                onClick={() => setShowOptions(true)}
+              >
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                  stroke='currentColor'
+                  className='h-6 w-6'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 016.336-4.486l-3.276 3.276a3.004 3.004 0 002.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852z'
+                  />
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M4.867 19.125h.008v.008h-.008v-.008z'
+                  />
+                </svg>
+              </button>
+            </div>
+            {/* <label
+                    className="btn"
+                    onClick={() => setShowPlayerScores(true)}
+                  >
+                    Stats
+                  </label> */}
+          </div>
+          <ul>
+            {players.map((player, index) => {
+              return (
+                <li key={index}>
+                  <PlayerStatus player={player} />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
+  const OptionsModal = () => {
+    return (
+      <div className={optionsModalClass}>
+        <div className='modal-box relative'>
+          <label
+            className='btn-sm btn-circle btn absolute right-2 top-2'
+            onClick={() => setShowOptions(false)}
+          >
+            ✕
+          </label>
+          <h3 className='text-lg font-bold'>Options</h3>
+          <div className='p-5'>
+            <div className='form-control'>
+              <label className='label'>
+                <span className='label-text-alt'>Min Players</span>
+              </label>
+              {minPlayers && (
+                <input
+                  type='number'
+                  className='input-bordered input'
+                  // defaultValue={optionMinPlayers}
+                  value={optionMinPlayers}
+                  onChange={handleMinPlayerOptionUpdate}
+                />
+              )}
+            </div>
+            <div className='form-control'>
+              <label className='label'>
+                <span className='label-text-alt'>Countdown Seconds</span>
+              </label>
+              <input
+                type='number'
+                className='input-bordered input'
+                // defaultValue={optionMinPlayers}
+                value={countdownSeconds}
+                onChange={(e) => setCountdownSeconds(e.target.value)}
+              />
+            </div>
+            <div className='mt-5'>
+              <div className='btn-accent btn' onClick={editOptions}>
+                Save
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (!standup.isComplete && !standup.isBowpourri) {
+    if (!signedIn) {
+      return (
+        <div className='container mx-auto'>
+          <div className='flex flex-wrap justify-between'>
+            <div className='basis-3/4 pr-6'>
+              <div className='flex justify-center content-center h-screen'>
+                <button onClick={handleSignIn} className='btn-primary btn'>
+                  Sign in to Bowst
+                </button>
+              </div>
+            </div>
+            <div className='basis-1/4'>
+              <PlayerTableCard />
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (!minPlayers) {
+      return <div>Set min players!</div>;
+    }
+    if (players.length < minPlayers) {
+      return (
+        <div className='container mx-auto'>
+          <div className='flex flex-wrap justify-between'>
+            <div className='basis-3/4 pr-6'>
+              <div className='prose'>
+                <h2>Waiting for more players...</h2>
+              </div>
+            </div>
+            <div className='basis-1/4'>
+              <PlayerTableCard />
+            </div>
+          </div>
+          <OptionsModal />
+        </div>
+      );
+    }
+    return (
+      <div className='container mx-auto'>
+        <div className='flex flex-wrap justify-between'>
+          <div className='basis-3/4 pr-6'>
+            <PlayerSpinWheel />
+          </div>
+          <div className='basis-1/4'>
+            <PlayerTableCard />
+          </div>
+        </div>
+        <OptionsModal />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className='container mx-auto'>
         <div className='flex flex-wrap justify-between'>
           <div className='basis-3/4 pr-6'>
             {!signedIn ? <StartTriviaCard /> : <SelectCategoryCard />}
-            {selectedCategory ? <ShowQuestion /> : ''}
-            {newGame && unanswered.length > 0 ? (
+            {selectedCategory && signedIn ? <ShowQuestion /> : ''}
+            {newGame && signedIn && unanswered.length > 0 ? (
               <div>
                 Waiting on: {unanswered.map((p, i) => p.name).join(', ')}
               </div>
@@ -528,57 +806,9 @@ export default function TriviaIndex() {
             {answerImg && <img src={answerImg} alt='answer-img' />}
           </div>
           <div className='basis-1/4'>
-            <div className='card border-accent bg-base-200 text-accent'>
-              <div className='card-body'>
-                <div className='flex items-start justify-start '>
-                  <div className='w-100 card-title flex-1 flex-row justify-between'>
-                    <h2>Players</h2>
-                    <button
-                      className='btn-sm btn-square btn'
-                      onClick={() => setShowOptions(true)}
-                    >
-                      <svg
-                        xmlns='http://www.w3.org/2000/svg'
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        strokeWidth={1.5}
-                        stroke='currentColor'
-                        className='h-6 w-6'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          d='M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 016.336-4.486l-3.276 3.276a3.004 3.004 0 002.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852z'
-                        />
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          d='M4.867 19.125h.008v.008h-.008v-.008z'
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  {/* <label
-                    className="btn"
-                    onClick={() => setShowPlayerScores(true)}
-                  >
-                    Stats
-                  </label> */}
-                </div>
-                <ul>
-                  {players.map((player, index) => {
-                    return (
-                      <li key={index}>
-                        <PlayerStatus player={player} />
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </div>
+            <PlayerTableCard />
 
             <GameActions />
-            {gameComplete ? <div>Game Complete</div> : ''}
           </div>
         </div>
         <div className={playerScoreModalClass}>
@@ -593,50 +823,7 @@ export default function TriviaIndex() {
             <PlayerScores />
           </div>
         </div>
-        <div className={optionsModalClass}>
-          <div className='modal-box relative'>
-            <label
-              className='btn-sm btn-circle btn absolute right-2 top-2'
-              onClick={() => setShowOptions(false)}
-            >
-              ✕
-            </label>
-            <h3 className='text-lg font-bold'>Options</h3>
-            <div className='p-5'>
-              <div className='form-control'>
-                <label className='label'>
-                  <span className='label-text-alt'>Min Players</span>
-                </label>
-                {minPlayers && (
-                  <input
-                    type='number'
-                    className='input-bordered input'
-                    // defaultValue={optionMinPlayers}
-                    value={optionMinPlayers}
-                    onChange={handleMinPlayerOptionUpdate}
-                  />
-                )}
-              </div>
-              <div className='form-control'>
-                <label className='label'>
-                  <span className='label-text-alt'>Countdown Seconds</span>
-                </label>
-                <input
-                  type='number'
-                  className='input-bordered input'
-                  // defaultValue={optionMinPlayers}
-                  value={countdownSeconds}
-                  onChange={(e) => setCountdownSeconds(e.target.value)}
-                />
-              </div>
-              <div className='mt-5'>
-                <div className='btn-accent btn' onClick={editOptions}>
-                  Save
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <OptionsModal />
       </div>
       <div className='btm-nav btm-nav-lg h-auto p-5'>
         <div>
