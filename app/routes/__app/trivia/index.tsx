@@ -35,7 +35,8 @@ type PlayerData = {
 interface Standup {
   players: PlayerData[];
   nextSpinner: PlayerData | null;
-  nextWinner: String | null;
+  nextWinnerEmail: String | null;
+  // nextWinnerIndex: number | null;
   isComplete: Boolean;
   isBowpourri: Boolean;
   categorySelector: String | null | undefined;
@@ -44,7 +45,8 @@ interface Standup {
 const defaultStandup = {
   players: [],
   nextSpinner: null,
-  nextWinner: null,
+  nextWinnerEmail: null,
+  // nextWinnerIndex: 0,
   isComplete: false,
   isBowpourri: false,
   categorySelector: null,
@@ -52,6 +54,7 @@ const defaultStandup = {
 
 export default function TriviaIndex() {
   const user = useUser();
+  const [showSpinWheel, setShowSpinWheel] = useState(true);
   const [userData, setUserData] = useState();
   const [signedIn, setSignedIn] = useState(false);
   const [players, setPlayers] = useState([]);
@@ -65,6 +68,7 @@ export default function TriviaIndex() {
   const [playerScores, setPlayerScores] = useState();
   const [playerScoreError, setPlayerScoreError] = useState();
   const [showPlayerScores, setShowPlayerScores] = useState(false);
+  const [showBowpourriStart, setShowBowpourriStart] = useState(false);
   const [playerStats, setPlayerStats] = useState();
   const [selectedOption, setSelectedOption] = useState();
   const [countdownCompleted, setCountdownCompleted] = useState(false);
@@ -118,11 +122,14 @@ export default function TriviaIndex() {
     socket.emit('handleSpin');
   };
 
+  // Inbound
   const handleRefreshWheel = (players, selectedSpinner) => {
+    console.log('handleRefreshWheel: ', selectedSpinner);
+
     let newStandup = {
       players,
       nextSpinner: selectedSpinner,
-      nextWinner: null,
+      nextWinnerEmail: null,
       isComplete: players.length === 0,
       isBowpourri: false,
       categorySelector: undefined,
@@ -130,21 +137,62 @@ export default function TriviaIndex() {
     setStandup(newStandup);
   };
 
-  const handleSpinResults = (nextWinner: string, nextPlayers: PlayerData[]) => {
-    const isBowpourri = nextWinner === 'bowpourri';
+  const handleSpinResults = (
+    nextWinnerEmail: string,
+    nextPlayers: PlayerData[]
+  ) => {
+    console.log('MSG: Handling spin results');
+    const isBowpourri = nextWinnerEmail === 'bowpourri';
     const previousSpinner = standup.nextSpinner;
+    // const nextWinnerIndex = isBowpourri
+    //   ? null
+    //   : nextPlayers.findIndex((x) => x.email === nextWinnerEmail);
     const nextSpinner = isBowpourri
       ? null
-      : players.find((x) => x.email === nextWinner) || null;
-    console.log('nextWinner: ', nextWinner);
+      : nextPlayers.find((x) => x.email === nextWinnerEmail);
+    console.log('nextSpinner: ', nextSpinner);
+    console.log('players: ', players);
+    console.log('nextPlayers: ', nextPlayers);
+    console.log('nextWinnerEmail: ', nextWinnerEmail);
     setStandup({
       ...standup,
       players: nextPlayers,
-      nextWinner,
+      nextWinnerEmail,
+      // nextWinnerIndex,
       nextSpinner,
-      isBowpourri: nextWinner === 'bowpourri',
+      isBowpourri: nextWinnerEmail === 'bowpourri',
       categorySelector: isBowpourri ? previousSpinner?.email : null,
     });
+    if (isBowpourri) {
+      console.log('setting isBowpourri to true');
+      setShowBowpourriStart(true);
+    }
+  };
+
+  const BowpourriStartModal = () => {
+    const handleOk = () => {
+      setShowBowpourriStart(false);
+      setShowSpinWheel(false);
+    };
+    return (
+      <div className={bowpourriStartModalClass}>
+        <div className='modal-box relative'>
+          <label
+            className='btn-sm btn-circle btn absolute right-2 top-2'
+            onClick={() => setShowBowpourriStart(false)}
+          >
+            ✕
+          </label>
+          <h3 className='text-lg font-bold'>Bowpourri!</h3>
+          <div className='p-5'></div>
+          <div className='mt-5'>
+            <div className='btn-accent btn' onClick={handleOk}>
+              Ok
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const handlePlayAgain = () => {
@@ -561,29 +609,14 @@ export default function TriviaIndex() {
   };
 
   const PlayerSpinWheel = () => {
-    // const [nextPlayer, setNextPlayer] = useState();
+    const [winningPlayer, setWinningPlayer] = useState<PlayerData>();
+
     if (!players || players.length < 1) {
       return <div />;
     }
-    const playerOptions = players.map((player, i) => {
-      return {
-        option: player.name,
-      };
-      console.log('player: ', player);
-      // return <div key={i}>{`Player ${i}`}</div>;
-    });
-    // const playerOptions = players.map((player, i) => {
-    //   return {
-    //     id: i,
-    //     image: '',
-    //     text: player.name,
-    //   };
-    //   console.log('player: ', player);
-    //   // return <div key={i}>{`Player ${i}`}</div>;
-    // });
 
-    const onStopSpin = () => {
-      console.log('whoop');
+    const onStopSpin = (player: PlayerData) => {
+      setWinningPlayer(player);
     };
 
     const handleSpin = () => {
@@ -591,7 +624,7 @@ export default function TriviaIndex() {
     };
 
     return (
-      <div className='container mx-auto'>
+      <div className='container mx-100'>
         <div className='flex items-center justify-center h-screen'>
           <ClientOnly fallback={<div />}>
             {() => (
@@ -604,6 +637,9 @@ export default function TriviaIndex() {
               />
             )}
           </ClientOnly>
+          <div className='relative prose lg:prose-xl text-success'>
+            <h1>{winningPlayer?.name}</h1>
+          </div>
         </div>
       </div>
     );
@@ -630,6 +666,9 @@ export default function TriviaIndex() {
 
   const playerScoreModalClass = showPlayerScores ? 'modal modal-open' : 'modal';
   const optionsModalClass = showOptions ? 'modal modal-open' : 'modal';
+  const bowpourriStartModalClass = showBowpourriStart
+    ? 'modal modal-open'
+    : 'modal';
 
   const yourCategories = userCategories?.[userData?.name];
 
@@ -665,12 +704,6 @@ export default function TriviaIndex() {
                 </svg>
               </button>
             </div>
-            {/* <label
-                    className="btn"
-                    onClick={() => setShowPlayerScores(true)}
-                  >
-                    Stats
-                  </label> */}
           </div>
           <ul>
             {players.map((player, index) => {
@@ -735,7 +768,7 @@ export default function TriviaIndex() {
     );
   };
 
-  if (!standup.isComplete && !standup.isBowpourri) {
+  if (showSpinWheel) {
     if (!signedIn) {
       return (
         <div className='container mx-auto'>
@@ -774,6 +807,7 @@ export default function TriviaIndex() {
         </div>
       );
     }
+    console.log('showSpinWheel: ', showSpinWheel);
     return (
       <div className='container mx-auto'>
         <div className='flex flex-wrap justify-between'>
@@ -824,6 +858,7 @@ export default function TriviaIndex() {
           </div>
         </div>
         <OptionsModal />
+        <BowpourriStartModal />
       </div>
       <div className='btm-nav btm-nav-lg h-auto p-5'>
         <div>

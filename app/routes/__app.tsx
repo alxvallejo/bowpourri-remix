@@ -79,15 +79,6 @@ export default function Layout() {
               className='dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-100 p-2 shadow'
             >
               <li>
-                <Link to='/categories'>Categories</Link>
-              </li>
-              <li>
-                <Link to='/questions'>Questions</Link>
-              </li>
-              <li>
-                <Link to='/notes'>Notes</Link>
-              </li>
-              <li>
                 <Link to='/trivia'>Trivia</Link>
               </li>
             </ul>
