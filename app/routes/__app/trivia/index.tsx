@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { categories } from './categories';
 import { CategoryForm } from './CategoryForm';
+import { useAnimationFrame } from 'framer-motion';
 import TailwindColor from '../../../tailwindColor';
 import daisyThemes from 'daisyui/src/colors/themes';
 import { SpinWheel } from './spinWheel.client';
@@ -32,24 +33,14 @@ type PlayerData = {
   answered: Boolean;
 };
 
-interface Standup {
-  players: PlayerData[];
-  nextSpinner: PlayerData | null;
-  nextWinnerEmail: String | null;
-  // nextWinnerIndex: number | null;
-  isComplete: Boolean;
-  isBowpourri: Boolean;
-  categorySelector: String | null | undefined;
+interface StandUp {
+  isBowpourri: boolean;
+  doneList: PlayerData[];
 }
 
 const defaultStandup = {
-  players: [],
-  nextSpinner: null,
-  nextWinnerEmail: null,
-  // nextWinnerIndex: 0,
-  isComplete: false,
   isBowpourri: false,
-  categorySelector: null,
+  doneList: [],
 };
 
 export default function TriviaIndex() {
@@ -333,10 +324,13 @@ export default function TriviaIndex() {
     }
   };
 
-  const StartTriviaCard = () => {
+  const SignInCard = () => {
     return (
       <div className='card prose w-96'>
         <h1>Bowpourri</h1>
+        <button onClick={handleSignIn} className='btn-primary btn'>
+          Join Standup
+        </button>
       </div>
     );
   };
@@ -426,6 +420,50 @@ export default function TriviaIndex() {
     );
   };
 
+  const StandupList = () => {
+    return (
+      <div className='flex flex-wrap flex-col'>
+        <div className='flex flex-wrap'>
+          <ClientOnly fallback={<div />}>
+            {() => {
+              const randomInterval = (() => {
+                const random = (min, max) => Math.random() * (max - min) + min;
+                return (callback, min, max) => {
+                  const time = {
+                    start: performance.now(),
+                    total: random(min, max),
+                  };
+                  const tick = (now) => {
+                    if (time.total <= now - time.start) {
+                      time.start = now;
+                      time.total = random(min, max);
+                      callback();
+                    }
+                    requestAnimationFrame(tick);
+                  };
+                  requestAnimationFrame(tick);
+                };
+              })();
+
+              // randomInterval(() => console.log('hi'), 1000, 2000); // logs "hi" at a random interval between 1 and 2s
+              return players.map((p, i) => {
+                return (
+                  <div key={i} className='prose ml-14'>
+                    <h2>{p.name}</h2>
+                  </div>
+                );
+              });
+            }}
+          </ClientOnly>
+        </div>
+
+        <div className='p-14'>
+          <button className='btn btn-primary'>Spin Wheel</button>
+        </div>
+      </div>
+    );
+  };
+
   const SelectCategoryCard = () => {
     if (!minPlayers) {
       return <div>Set min players!</div>;
@@ -437,6 +475,9 @@ export default function TriviaIndex() {
         </div>
       );
     } else {
+      if (!standup.isBowpourri) {
+        return <StandupList />;
+      }
       const filteredCategories = selectedCategory
         ? categories.filter((x) => x.label === selectedCategory)
         : categories;
@@ -828,9 +869,9 @@ export default function TriviaIndex() {
       <div className='container mx-auto'>
         <div className='flex flex-wrap justify-between'>
           <div className='basis-3/4 pr-6'>
-            {!signedIn ? <StartTriviaCard /> : <SelectCategoryCard />}
-            {selectedCategory && signedIn ? <ShowQuestion /> : ''}
-            {newGame && signedIn && unanswered.length > 0 ? (
+            {!signedIn ? <SignInCard /> : <SelectCategoryCard />}
+            {selectedCategory ? <ShowQuestion /> : ''}
+            {newGame && unanswered.length > 0 ? (
               <div>
                 Waiting on: {unanswered.map((p, i) => p.name).join(', ')}
               </div>

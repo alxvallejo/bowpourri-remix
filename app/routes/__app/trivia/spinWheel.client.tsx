@@ -32,12 +32,12 @@ export const SpinWheel = ({
     return () => {};
   }, [standup]);
 
-  if (!standup || players.length === 0) {
+  if (!standup || players?.length === 0) {
     // console.log('nextSpinner: ', nextSpinner);
     return <div>Starting Standup</div>;
   }
 
-  const playerOptions = standup?.players.map((p) => {
+  const playerOptions = standup?.players?.map((p) => {
     return {
       option: p.name,
     };
