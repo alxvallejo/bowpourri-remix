@@ -258,7 +258,7 @@ export default function TriviaIndex() {
       return (
         <div>
           <h2>The game will begin momentarily</h2>
-          <h1>{seconds}</h1>
+          {/* <h1>{seconds}</h1> */}
         </div>
       );
     }
@@ -370,26 +370,34 @@ export default function TriviaIndex() {
     }
   };
 
+  const displayAnswer = () => {
+    if (!correctAnswer) {
+      return <div />;
+    }
+    const isCorrect = correctAnswer.option == selectedOption;
+    if (isCorrect) {
+      return (
+        <div className='prose lg:prose-md'>
+          <h2 className='text-success'>Congratulations!</h2>
+          <div>Correct Answer: {correctAnswer.option}</div>
+          <div className='text-lg'>{answerContext}</div>
+        </div>
+      );
+    } else {
+      return (
+        <div className='prose lg:prose-md'>
+          <h3 className='text-info'>Sorry, you are incorrect.</h3>
+          <div>Correct Answer: {correctAnswer.option}</div>
+          <div className='text-lg'>{answerContext}</div>
+          <br />
+        </div>
+      );
+    }
+  };
+
   const handleAnswer = ({ seconds, completed }) => {
     if (correctAnswer) {
-      const isCorrect = correctAnswer.option == selectedOption;
-      if (isCorrect) {
-        return (
-          <div className='prose lg:prose-md'>
-            <h2 className='text-success'>Congratulations!</h2>
-            <div>Correct Answer: {correctAnswer.option}</div>
-            <div>{answerContext}</div>
-          </div>
-        );
-      } else {
-        return (
-          <div className='prose lg:prose-md'>
-            <h3 className='text-info'>Sorry, you are incorrect.</h3>
-            <div>Correct Answer: {correctAnswer.option}</div>
-            <div>{answerContext}</div>
-          </div>
-        );
-      }
+      displayAnswer();
     } else {
       return <div>Letting you change your mind for {seconds} seconds...</div>;
     }
@@ -511,6 +519,8 @@ export default function TriviaIndex() {
 
   const yourCategories = userCategories?.[userData?.name];
 
+  const isCorrect = correctAnswer?.option == selectedOption;
+
   return (
     <>
       <div className='container mx-auto'>
@@ -589,6 +599,8 @@ export default function TriviaIndex() {
             >
               ✕
             </label>
+            {correctAnswer && displayAnswer()}
+
             <h3 className='text-lg font-bold'>Winner's Circle</h3>
             <PlayerScores />
           </div>
