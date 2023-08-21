@@ -235,7 +235,7 @@ export default function TriviaIndex() {
         <div className='prose flex flex-col items-start'>
           Today's question:
           <h3 className='border-r-ghost p-5 text-accent'>{newGame.question}</h3>
-          {newGame.options.map((option, i) => {
+          {newGame.options?.map((option, i) => {
             return (
               <div className='form-control' key={i}>
                 <label className='label cursor-pointer'>
