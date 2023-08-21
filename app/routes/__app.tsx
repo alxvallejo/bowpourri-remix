@@ -173,7 +173,7 @@ export default function Layout() {
               </div>
               <Form action='/logout' method='post'>
                 <button type='submit' className='rounded py-2 px-4'>
-                  Logout 2
+                  Logout
                 </button>
               </Form>
             </div>
