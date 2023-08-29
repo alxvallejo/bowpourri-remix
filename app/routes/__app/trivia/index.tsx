@@ -200,7 +200,7 @@ export default function TriviaIndex() {
 
   const StartTriviaCard = () => {
     return (
-      <div className='card prose w-96'>
+      <div className='card prose md:w-96'>
         <h1>Bowpourri</h1>
         <button onClick={handleSignIn} className='btn-primary btn'>
           Join Game!
@@ -252,7 +252,7 @@ export default function TriviaIndex() {
   };
 
   const CategoryCard = ({ category }) => {
-    const className = `btn btn-outline ${category.class} m-2`;
+    const className = `btn btn-outline ${category.class} m-2 no-animation btn-sm md:btn-lg`;
     const isDisabled = !!selectedCategory;
     const name = userData?.name || userData?.email;
     return (
@@ -268,7 +268,7 @@ export default function TriviaIndex() {
 
   const UserCategoryCard = ({ categoryName, color }) => {
     console.log('color: ', color);
-    const className = `btn btn-outline ${color} m-2 no-animation`;
+    const className = `btn btn-outline ${color} m-2 no-animation btn-sm md:btn-lg`;
     const isDisabled = !!selectedCategory;
     const name = userData?.name || userData?.email;
     return (
@@ -299,9 +299,7 @@ export default function TriviaIndex() {
       if (selectedCategory) {
         return (
           <div className='prose'>
-            <h3>
-              {categorySelector} chose {selectedCategory}
-            </h3>
+            <h3>{categorySelector} chose</h3>
             <h2>{selectedCategory}</h2>
           </div>
         );
@@ -321,7 +319,7 @@ export default function TriviaIndex() {
                   const randomColor = tailwindColor.pick();
                   return (
                     <div
-                      className='card flex-row items-start justify-start text-center'
+                      className='card md:flex-row items-start justify-start text-center'
                       key={index}
                     >
                       <div className='card-title'>{userName}</div>
@@ -401,7 +399,7 @@ export default function TriviaIndex() {
   };
 
   const ShowAnswer = () => {
-    if (countdownCompleted && newGame) {
+    if (newGame) {
       const ms = ANSWER_BUFFER * 1000;
       return (
         <div>
@@ -454,7 +452,7 @@ export default function TriviaIndex() {
       return b.score - a.score;
     });
     return (
-      <div className='card w-96'>
+      <div className='card md:w-96'>
         <table className={`table-compact table w-full ${tableContentColor}`}>
           <thead>
             <tr>
@@ -475,6 +473,25 @@ export default function TriviaIndex() {
     );
   };
 
+  const NewGameButton = () => {
+    if (!gameComplete && signedIn && selectedCategory) {
+      return (
+        <button
+          className='btn-primary btn'
+          onClick={() => {
+            setNewGame(null);
+            if (selectedCategory) {
+              socket.emit('refreshGame', name, selectedCategory);
+            }
+          }}
+        >
+          New Game
+        </button>
+      );
+    }
+    return <div />;
+  };
+
   const GameActions = () => {
     const name = userData?.name || userData?.email;
     return (
@@ -489,19 +506,7 @@ export default function TriviaIndex() {
           </button>
         )}
 
-        {!gameComplete && signedIn && (
-          <button
-            className='btn-primary btn'
-            onClick={() => {
-              setNewGame(null);
-              if (selectedCategory) {
-                socket.emit('refreshGame', name, selectedCategory);
-              }
-            }}
-          >
-            New Game
-          </button>
-        )}
+        <NewGameButton />
       </div>
     );
   };
@@ -527,16 +532,13 @@ export default function TriviaIndex() {
 
   const playerScoreModalClass = showPlayerScores ? 'modal modal-open' : 'modal';
   const optionsModalClass = showOptions ? 'modal modal-open' : 'modal';
-
   const yourCategories = userCategories?.[userData?.name];
-
-  // const isCorrect = correctAnswer?.option == selectedOption;
 
   return (
     <>
       <div className='container mx-auto'>
-        <div className='flex flex-wrap justify-between'>
-          <div className='basis-3/4 pr-6'>
+        <div className='flex flex-wrap justify-between flex-col-reverse md:flex-row'>
+          <div className='basis-full md:basis-3/4'>
             {!signedIn ? <StartTriviaCard /> : <SelectCategoryCard />}
             {selectedCategory ? <ShowQuestion /> : ''}
             {newGame && unanswered.length > 0 ? (
@@ -547,7 +549,7 @@ export default function TriviaIndex() {
               <ShowAnswer />
             )}
           </div>
-          <div className='basis-1/4'>
+          <div className='basis-full md:basis-1/4'>
             <div className='card border-accent bg-base-200 text-accent'>
               <div className='card-body'>
                 <div className='flex items-start justify-start '>
@@ -611,8 +613,9 @@ export default function TriviaIndex() {
             </label>
             {correctAnswer && displayAnswer()}
 
-            <h3 className='text-lg font-bold'>Winner's Circle</h3>
+            {/* <h3 className='text-lg font-bold'>Winner's Circle</h3> */}
             {/* <PlayerScores /> */}
+            <NewGameButton />
           </div>
         </div>
         <div className={optionsModalClass}>
@@ -640,16 +643,12 @@ export default function TriviaIndex() {
                 )}
               </div>
               <div className='form-control'>
-                <label className='label'>
-                  <span className='label-text-alt'>Countdown Seconds</span>
-                </label>
-                <input
-                  type='number'
-                  className='input-bordered input'
-                  // defaultValue={optionMinPlayers}
-                  value={countdownSeconds}
-                  onChange={(e) => setCountdownSeconds(e.target.value)}
-                />
+                <button
+                  className='btn btn-accent'
+                  onClick={() => socket.emit('clearPlayerStats')}
+                >
+                  Reset Scores
+                </button>
               </div>
               <div className='mt-5'>
                 <div className='btn-accent btn' onClick={editOptions}>
@@ -660,7 +659,7 @@ export default function TriviaIndex() {
           </div>
         </div>
       </div>
-      <div className='btm-nav btm-nav-lg h-auto p-5'>
+      <div className='btm-nav btm-nav-lg h-auto p-5 invisible md:visible'>
         <div>
           {!newGame && <CategoryForm handleSaveCategory={handleSaveCategory} />}
         </div>

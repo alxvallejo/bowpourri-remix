@@ -102,8 +102,8 @@ export default function Layout() {
 
   return (
     <div className='flex h-full min-h-screen flex-col'>
-      <div className='navbar bg-base-100 fixed'>
-        <div className='navbar-start'>
+      <div className='navbar bg-base-100 fixed px-5'>
+        {/* <div className='navbar-start invisible md:visible'>
           <div className='dropdown'>
             <label tabIndex={0} className='btn-ghost btn-circle btn'>
               <svg
@@ -139,8 +139,8 @@ export default function Layout() {
               </li>
             </ul>
           </div>
-        </div>
-        <div className='navbar-center'>
+        </div> */}
+        <div className='navbar-start'>
           <Link to='.'>
             <div className='font-title inline-flex text-lg text-primary transition-all duration-200 md:text-3xl'>
               <span className='lowercase'>Bowst</span>{' '}
@@ -189,7 +189,7 @@ export default function Layout() {
         </div>
       </div>
 
-      <main className='flex h-full mt-32'>
+      <main className='flex h-full md:mt-32 mt-16'>
         <div className='w-full flex-1 p-6'>
           {!socket ? `Connecting` : <Outlet context={{ socket }} />}
         </div>
