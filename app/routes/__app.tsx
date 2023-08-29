@@ -94,7 +94,7 @@ export default function Layout() {
 
   return (
     <div className='flex h-full min-h-screen flex-col'>
-      <div className='navbar bg-base-100'>
+      <div className='navbar bg-base-100 fixed'>
         <div className='navbar-start'>
           <div className='dropdown'>
             <label tabIndex={0} className='btn-ghost btn-circle btn'>
@@ -181,7 +181,7 @@ export default function Layout() {
         </div>
       </div>
 
-      <main className='flex h-full'>
+      <main className='flex h-full mt-32'>
         <div className='w-full flex-1 p-6'>
           <Outlet context={{ socket }} />
         </div>
