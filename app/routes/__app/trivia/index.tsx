@@ -39,12 +39,12 @@ export default function TriviaIndex() {
   const [selectedOption, setSelectedOption] = useState();
   const [countdownCompleted, setCountdownCompleted] = useState(false);
   const [correctAnswer, setCorrectAnswer] = useState();
-  const [answerImg, setAnswerImg] = useState();
   const [minPlayers, setMinPlayers] = useState();
   const [showOptions, setShowOptions] = useState(false);
   const [optionMinPlayers, setOptionMinPlayers] = useState();
   const [answerContext, setAnswerContext] = useState();
   const [countdownSeconds, setCountdownSeconds] = useState(15);
+  const [answerImg, setAnswerImg] = useState();
 
   const { socket } = useOutletContext();
 
@@ -73,6 +73,7 @@ export default function TriviaIndex() {
     setSelectedOption();
     setCountdownCompleted(false);
     setCorrectAnswer();
+    setAnswerImg();
   };
 
   const handleResetGame = (msg) => {
@@ -146,12 +147,12 @@ export default function TriviaIndex() {
     socket.on('playerScoreError', setPlayerScoreError);
     socket.on('playerStats', handlePlayerStats);
     socket.on('answer', setCorrectAnswer);
-    socket.on('answerImg', setAnswerImg);
     socket.on('signOut', onSignOut);
     socket.on('resetGame', handleResetGame);
     socket.on('userCategories', handleUserCategories);
     socket.on('gameRules', handleGameRules);
     socket.on('answerContext', setAnswerContext);
+    socket.on('answerImg', setAnswerImg);
   }, [socket]);
 
   useEffect(() => {
@@ -208,9 +209,14 @@ export default function TriviaIndex() {
     );
   };
 
-  const handleCountdown = ({ seconds, completed }) => {
-    console.log('newGame: ', newGame);
-    if ((completed || countdownCompleted) && newGame) {
+  const ShowQuestion = () => {
+    if (!newGame) {
+      return (
+        <div>
+          <h2>The game will begin momentarily</h2>
+        </div>
+      );
+    } else {
       if (!signedIn) {
         return (
           <div className='prose flex flex-col items-start'>
@@ -242,24 +248,7 @@ export default function TriviaIndex() {
           })}
         </div>
       );
-    } else {
-      setCountdownCompleted(true);
-      return (
-        <div>
-          <h2>The game will begin momentarily</h2>
-          {/* <h1>{seconds}</h1> */}
-        </div>
-      );
     }
-  };
-
-  const ShowQuestion = () => {
-    const ms = countdownSeconds * 1000;
-    return (
-      <div>
-        <Countdown date={Date.now() + ms} renderer={handleCountdown} />
-      </div>
-    );
   };
 
   const CategoryCard = ({ category }) => {
@@ -363,22 +352,41 @@ export default function TriviaIndex() {
     if (!correctAnswer) {
       return <div />;
     }
+    const showImg = () => {
+      if (answerImg) {
+        const { image, keywords } = answerImg;
+        return (
+          <figure className='max-w-lg m-6'>
+            <img
+              className='h-auto max-w-full'
+              src={image.original}
+              alt={keywords}
+            />
+            <figcaption className='mt-2 text-sm text-center text-gray-500 dark:text-gray-400'>
+              {keywords}
+            </figcaption>
+          </figure>
+        );
+      }
+      return <div />;
+    };
     const isCorrect = correctAnswer.option == selectedOption;
     if (isCorrect) {
       return (
-        <div className='prose lg:prose-md'>
+        <div className='prose lg:prose-md mb-6'>
           <h2 className='text-success'>Congratulations!</h2>
           <div>Correct Answer: {correctAnswer.option}</div>
           <div className='text-lg'>{answerContext}</div>
+          {showImg()}
         </div>
       );
     } else {
       return (
-        <div className='prose lg:prose-md'>
+        <div className='prose lg:prose-md mb-6'>
           <h3 className='text-info'>Sorry, you are incorrect.</h3>
           <div>Correct Answer: {correctAnswer.option}</div>
           <div className='text-lg'>{answerContext}</div>
-          <br />
+          {showImg()}
         </div>
       );
     }
@@ -409,7 +417,6 @@ export default function TriviaIndex() {
 
   const PlayerStatus = ({ player }) => {
     const { name, email, answered, playerData, isCorrect } = player;
-    console.log('player: ', player);
     let answerIcon;
     if (correctAnswer) {
       // const isCorrect = correctAnswer.option == selectedOption;
@@ -482,12 +489,14 @@ export default function TriviaIndex() {
           </button>
         )}
 
-        {newGame && !gameComplete && (
+        {!gameComplete && signedIn && (
           <button
             className='btn-primary btn'
             onClick={() => {
               setNewGame(null);
-              socket.emit('refreshGame', name);
+              if (selectedCategory) {
+                socket.emit('refreshGame', name, selectedCategory);
+              }
             }}
           >
             New Game
@@ -521,7 +530,7 @@ export default function TriviaIndex() {
 
   const yourCategories = userCategories?.[userData?.name];
 
-  const isCorrect = correctAnswer?.option == selectedOption;
+  // const isCorrect = correctAnswer?.option == selectedOption;
 
   return (
     <>
@@ -537,7 +546,6 @@ export default function TriviaIndex() {
             ) : (
               <ShowAnswer />
             )}
-            {answerImg && <img src={answerImg} alt='answer-img' />}
           </div>
           <div className='basis-1/4'>
             <div className='card border-accent bg-base-200 text-accent'>
@@ -604,7 +612,7 @@ export default function TriviaIndex() {
             {correctAnswer && displayAnswer()}
 
             <h3 className='text-lg font-bold'>Winner's Circle</h3>
-            <PlayerScores />
+            {/* <PlayerScores /> */}
           </div>
         </div>
         <div className={optionsModalClass}>

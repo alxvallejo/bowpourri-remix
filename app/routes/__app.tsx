@@ -7,7 +7,8 @@ import { Form, Link, NavLink, Outlet, useLoaderData } from '@remix-run/react';
 // import { requireUserId } from '~/session.server';
 import { useUser } from '~/utils';
 // import { getNoteListItems } from '~/models/note.server';
-import io from 'socket.io-client';
+import io, { Socket } from 'socket.io-client';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 const themeList = [
   {
@@ -52,15 +53,16 @@ export async function loader({ request }: LoaderArgs) {
   // const userId = await requireUserId(request);
   // const noteListItems = await getNoteListItems({ userId });
   const wsUrl = process.env.WEBSOCKET_API || 'http://localhost:4000';
+
   return json({ wsUrl });
 }
 
 export default function Layout() {
   const { wsUrl } = useLoaderData<typeof loader>();
   const [currentTheme, setCurrentTheme] = useState('');
+  let [socket, setSocket] =
+    useState<Socket<DefaultEventsMap, DefaultEventsMap>>();
   const user = useUser();
-  const socket = io.connect(wsUrl);
-  console.log('LOADING SOCKET');
 
   useEffect(() => {
     themeChange(false);
@@ -70,6 +72,12 @@ export default function Layout() {
       body.setAttribute('data-theme', savedTheme);
       setCurrentTheme(savedTheme);
     }
+    let connection = io.connect(wsUrl);
+    setSocket(connection);
+
+    return () => {
+      connection.close();
+    };
   }, []);
 
   const handleThemeChange = (theme: string) => {
@@ -164,7 +172,7 @@ export default function Layout() {
                 </label>
                 <ul
                   tabIndex={0}
-                  className='dropdown-content menu rounded-box mt-4 w-52 bg-base-100 p-2 '
+                  className='dropdown-content menu rounded-box mt-4 w-52 bg-base-100 p-2 z-50'
                 >
                   {themeList.map((theme, i) => {
                     return <ThemeListItem key={i} theme={theme} />;
@@ -183,7 +191,7 @@ export default function Layout() {
 
       <main className='flex h-full mt-32'>
         <div className='w-full flex-1 p-6'>
-          <Outlet context={{ socket }} />
+          {!socket ? `Connecting` : <Outlet context={{ socket }} />}
         </div>
       </main>
     </div>
