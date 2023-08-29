@@ -290,7 +290,7 @@ export default function TriviaIndex() {
 
   const UserCategoryCard = ({ categoryName, color }) => {
     console.log('color: ', color);
-    const className = `btn btn-outline ${color} m-2`;
+    const className = `btn btn-outline ${color} m-2 no-animation`;
     const isDisabled = !!selectedCategory;
     const name = userData?.name || userData?.email;
     return (
@@ -329,15 +329,15 @@ export default function TriviaIndex() {
         );
       }
       return (
-        <div>
+        <div className='h-[100vw]'>
           Choose a category:
           <div className='flex flex-row flex-wrap items-start'>
             {filteredCategories.map((cat, i) => {
               return <CategoryCard key={i} category={cat} />;
             })}
           </div>
-          <div className='card prose text-center'>
-            <div className='card-body'>
+          <div className='card text-center'>
+            <div className='card-body overflow-y-auto h-full'>
               {Object.entries(userCategories).map(
                 ([userName, userCats], index) => {
                   const randomColor = tailwindColor.pick();
@@ -346,8 +346,8 @@ export default function TriviaIndex() {
                       className='card flex-row items-start justify-start text-center'
                       key={index}
                     >
-                      <div className='card-title w-0'>{userName}</div>
-                      <div className='card-body flex-row items-start justify-start'>
+                      <div className='card-title'>{userName}</div>
+                      <div className='card-body flex-row items-start justify-start flex-wrap'>
                         {userCats.map((cat, i) => {
                           return (
                             <UserCategoryCard
