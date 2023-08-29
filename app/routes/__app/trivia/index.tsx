@@ -160,17 +160,6 @@ export default function TriviaIndex() {
       // Remove yourself from players list
       console.log('userData on disconnect: ', userData);
       socket.emit('signOut', userData?.email);
-      // socket.off("userScores", handleUserScores);
-      // socket.off("players", setPlayers);
-      // socket.off("category", setSelectedCategory);
-      // socket.off("newGame", setNewGame);
-      // socket.off("newGameError", setNewGameError);
-      // socket.off("playerScores", handlePlayerScores);
-      // socket.off("playerScoreError", setPlayerScoreError);
-      // socket.off("answer", setCorrectAnswer);
-      // socket.off("signOut", onSignOut);
-      // socket.off("resetGame", handleResetGame);
-
       socket.removeAllListeners();
     };
   }, []);
@@ -480,6 +469,7 @@ export default function TriviaIndex() {
   };
 
   const GameActions = () => {
+    const name = userData?.name || userData?.email;
     return (
       <div className='card mt-4 w-full bg-neutral md:basis-1/4'>
         {/* <button className="btn-secondary btn" onClick={handleSignOut}>
@@ -489,6 +479,18 @@ export default function TriviaIndex() {
         {gameComplete && (
           <button className='btn-primary btn' onClick={handlePlayAgain}>
             Play Again
+          </button>
+        )}
+
+        {newGame && !gameComplete && (
+          <button
+            className='btn-primary btn'
+            onClick={() => {
+              setNewGame(null);
+              socket.emit('refreshGame', name);
+            }}
+          >
+            New Game
           </button>
         )}
       </div>
