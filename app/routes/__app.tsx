@@ -4,10 +4,50 @@ import type { LoaderArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, Link, NavLink, Outlet, useLoaderData } from '@remix-run/react';
 
-import { requireUserId } from '~/session.server';
+// import { requireUserId } from '~/session.server';
 import { useUser } from '~/utils';
-import io from 'socket.io-client';
-import { themeList } from '../styles/themes';
+// import { getNoteListItems } from '~/models/note.server';
+import io, { Socket } from 'socket.io-client';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+
+const themeList = [
+  {
+    value: 'garden',
+    label: 'Garden',
+  },
+  {
+    value: 'aqua',
+    label: 'Aqua',
+  },
+  {
+    value: 'winter',
+    label: 'Winter',
+  },
+  {
+    value: 'cupcake',
+    label: 'Cupcake',
+  },
+  {
+    value: 'synthwave',
+    label: 'Synthwave',
+  },
+  {
+    value: 'emerald',
+    label: 'Emerald',
+  },
+  {
+    value: 'business',
+    label: 'Business',
+  },
+  {
+    value: 'cmyk',
+    label: 'CMYK',
+  },
+  {
+    value: 'dark',
+    label: 'Dark',
+  },
+];
 
 export async function loader({ request }: LoaderArgs) {
   // const userId = await requireUserId(request);
@@ -19,9 +59,9 @@ export async function loader({ request }: LoaderArgs) {
 export default function Layout() {
   const { wsUrl } = useLoaderData<typeof loader>();
   const [currentTheme, setCurrentTheme] = useState('');
+  let [socket, setSocket] =
+    useState<Socket<DefaultEventsMap, DefaultEventsMap>>();
   const user = useUser();
-  const socket = io.connect(wsUrl);
-  console.log('LOADING SOCKET');
 
   useEffect(() => {
     themeChange(false);
@@ -31,6 +71,12 @@ export default function Layout() {
       body.setAttribute('data-theme', savedTheme);
       setCurrentTheme(savedTheme);
     }
+    let connection = io.connect(wsUrl);
+    setSocket(connection);
+
+    return () => {
+      connection.close();
+    };
   }, []);
 
   const handleThemeChange = (theme: string) => {
@@ -55,8 +101,8 @@ export default function Layout() {
 
   return (
     <div className='flex h-full min-h-screen flex-col'>
-      <div className='navbar bg-base-100'>
-        <div className='navbar-start'>
+      <div className='navbar bg-base-100 fixed px-5'>
+        {/* <div className='navbar-start invisible md:visible'>
           <div className='dropdown'>
             <label tabIndex={0} className='btn-ghost btn-circle btn'>
               <svg
@@ -79,12 +125,21 @@ export default function Layout() {
               className='dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-100 p-2 shadow'
             >
               <li>
+                <Link to='/categories'>Categories</Link>
+              </li>
+              <li>
+                <Link to='/questions'>Questions</Link>
+              </li>
+              <li>
+                <Link to='/notes'>Notes</Link>
+              </li>
+              <li>
                 <Link to='/trivia'>Trivia</Link>
               </li>
             </ul>
           </div>
-        </div>
-        <div className='navbar-center'>
+        </div> */}
+        <div className='navbar-start'>
           <Link to='.'>
             <div className='font-title inline-flex text-lg text-primary transition-all duration-200 md:text-3xl'>
               <span className='lowercase'>Bowst</span>{' '}
@@ -116,7 +171,7 @@ export default function Layout() {
                 </label>
                 <ul
                   tabIndex={0}
-                  className='dropdown-content menu rounded-box mt-4 w-52 bg-base-100 p-2 '
+                  className='dropdown-content menu rounded-box mt-4 w-52 bg-base-100 p-2 z-50'
                 >
                   {themeList.map((theme, i) => {
                     return <ThemeListItem key={i} theme={theme} />;
@@ -133,9 +188,9 @@ export default function Layout() {
         </div>
       </div>
 
-      <main className='flex h-full'>
+      <main className='flex h-full md:mt-32 mt-16'>
         <div className='w-full flex-1 p-6'>
-          <Outlet context={{ socket, currentTheme }} />
+          {!socket ? `Connecting` : <Outlet context={{ socket }} />}
         </div>
       </main>
     </div>

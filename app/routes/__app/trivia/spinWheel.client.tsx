@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Wheel } from 'react-custom-roulette';
+// import { Wheel } from 'react-custom-roulette';
 
 export const SpinWheel = ({
   userData,
@@ -10,6 +10,7 @@ export const SpinWheel = ({
 }) => {
   const [nextWinnerIndex, setNextWinnerIndex] = useState();
   const { players, nextSpinner, nextWinnerEmail, isComplete } = standup;
+  console.log('nextSpinner: ', nextSpinner);
 
   let testOptions = ['Mark', 'Bill', 'Ted', 'Neo', 'Jack', 'Alex'].map((p) => {
     return { option: p };
@@ -56,7 +57,7 @@ export const SpinWheel = ({
 
   return (
     <div>
-      <Wheel
+      {/* <Wheel
         mustStartSpinning={startSpin}
         prizeNumber={nextWinnerIndex || 0}
         data={playerOptions}
@@ -64,7 +65,7 @@ export const SpinWheel = ({
         textColors={['#ffffff']}
         onStopSpinning={handleStopSpin}
         spinDuration={0.2}
-      />
+      /> */}
       <button
         className='btn-primary btn'
         disabled={!isSpinner}
