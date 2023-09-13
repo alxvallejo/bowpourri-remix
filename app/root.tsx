@@ -9,7 +9,7 @@ import {
   ScrollRestoration,
 } from '@remix-run/react';
 
-import tailwindStylesheetUrl from './styles/tailwind.css';
+// import tailwindStylesheetUrl from './styles/tailwind.css';
 import styles from './styles/index.css';
 import { getUser } from './session.server';
 
@@ -19,7 +19,7 @@ export const links: LinksFunction = () => {
 
 export const meta: MetaFunction = () => ({
   charset: 'utf-8',
-  title: 'Remix Notes',
+  title: 'Bowpourri Remix',
   viewport: 'width=device-width,initial-scale=1',
 });
 

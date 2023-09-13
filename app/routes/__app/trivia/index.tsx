@@ -43,7 +43,6 @@ export default function TriviaIndex() {
   const [showOptions, setShowOptions] = useState(false);
   const [optionMinPlayers, setOptionMinPlayers] = useState();
   const [answerContext, setAnswerContext] = useState();
-  const [countdownSeconds, setCountdownSeconds] = useState(15);
   const [answerImg, setAnswerImg] = useState();
 
   const { socket } = useOutletContext();
@@ -642,19 +641,18 @@ export default function TriviaIndex() {
                   />
                 )}
               </div>
-              <div className='form-control'>
-                <button
-                  className='btn btn-accent'
-                  onClick={() => socket.emit('clearPlayerStats')}
-                >
-                  Reset Scores
-                </button>
-              </div>
+              <div className='form-control'></div>
               <div className='mt-5'>
                 <div className='btn-accent btn' onClick={editOptions}>
                   Save
                 </div>
               </div>
+              <button
+                className='btn btn-accent'
+                onClick={() => socket.emit('clearPlayerStats')}
+              >
+                Reset Scores
+              </button>
             </div>
           </div>
         </div>
