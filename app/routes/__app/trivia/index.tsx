@@ -11,11 +11,19 @@ import {
 } from '@heroicons/react/24/solid';
 import { categories } from './categories';
 import { CategoryForm } from './CategoryForm';
+import { SelectCategoryCard, ShowQuestion } from './components/Categories';
+import { OptionsModal } from './components/Options';
 import { useAnimationFrame } from 'framer-motion';
 import TailwindColor from '../../../tailwindColor';
 // import daisyThemes from 'daisyui/src/colors/themes';
 import { SpinWheel } from './spinWheel.client';
 import { ClientOnly } from 'remix-utils';
+
+import {
+  PlayerScores,
+  PlayerTableCard,
+  PlayerStatus,
+} from './components/PlayerScores';
 
 // console.log('daisyThemes: ', daisyThemes);
 
@@ -45,13 +53,14 @@ const defaultStandup = {
 
 export default function TriviaIndex() {
   const user = useUser();
+  // console.log('user: ', user);
   const [showSpinWheel, setShowSpinWheel] = useState(true);
   const [userData, setUserData] = useState();
   const [signedIn, setSignedIn] = useState(false);
   const [players, setPlayers] = useState([]);
   const [gameComplete, setGameComplete] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState();
-  const [categorySelector, setCategorySelector] = useState();
+  // const [categorySelector, setCategorySelector] = useState();
   const [userCategories, setUserCategories] = useState([]);
   const [yesterdaysWinner, setYesterdaysWinner] = useState();
   const [newGame, setNewGame] = useState();
@@ -70,26 +79,9 @@ export default function TriviaIndex() {
   const [answerContext, setAnswerContext] = useState();
   const [countdownSeconds, setCountdownSeconds] = useState(15);
   const [standup, setStandup] = useState<Standup>(defaultStandup);
-  const [themeColors, setThemeColors] = useState([]);
   const [answerImg, setAnswerImg] = useState();
 
   const { socket, currentTheme } = useOutletContext();
-
-  // useEffect(() => {
-  //   // Determine the color palette
-
-  //   if (currentTheme && daisyThemes) {
-  //     console.log('daisyThemes: ', daisyThemes);
-  //     console.log('currentTheme', currentTheme);
-  //     const themeKey = `[data-theme=${currentTheme}]`;
-  //     const colorPaletteObj = daisyThemes[themeKey];
-  //     const colorArray = Object.values(colorPaletteObj).filter(
-  //       (x) => x !== 'dark'
-  //     );
-  //     console.log('colorArray: ', colorArray);
-  //     setThemeColors(colorArray);
-  //   }
-  // }, [currentTheme, daisyThemes]);
 
   const onSignOut = (socketId) => {
     // Remove the corresponding player
@@ -115,7 +107,7 @@ export default function TriviaIndex() {
 
   // Inbound
   const handleRefreshWheel = (players, selectedSpinner) => {
-    console.log('handleRefreshWheel: ', selectedSpinner);
+    console.log('selectedSpinner: ', selectedSpinner);
 
     let newStandup = {
       players,
@@ -208,7 +200,7 @@ export default function TriviaIndex() {
 
   const handleCategory = (name, newCategory) => {
     console.log('newCategory: ', newCategory);
-    setCategorySelector(name);
+    // setCategorySelector(name);
     setSelectedCategory(newCategory);
   };
 
@@ -336,190 +328,6 @@ export default function TriviaIndex() {
     );
   };
 
-  const ShowQuestion = () => {
-    if (!newGame) {
-      return (
-        <div>
-          <h2>The game will begin momentarily</h2>
-        </div>
-      );
-    } else {
-      if (!signedIn) {
-        return (
-          <div className='prose flex flex-col items-start'>
-            <h3 className='border-r-ghost p-5 text-info'>
-              Game in progress. Click Join Game!
-            </h3>
-          </div>
-        );
-      }
-      return (
-        <div className='prose flex flex-col items-start'>
-          Today's question:
-          <h3 className='border-r-ghost p-5 text-accent'>{newGame.question}</h3>
-          {newGame.options?.map((option, i) => {
-            return (
-              <div className='form-control' key={i}>
-                <label className='label cursor-pointer'>
-                  <input
-                    type='radio'
-                    name='radio-10'
-                    className='radio mr-4 radio-lg radio-accent'
-                    onChange={() => setSelectedOption(option)}
-                    checked={selectedOption == option}
-                  />
-                  <span className='label-text text-lg'>{option}</span>
-                </label>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-  };
-
-  const CategoryCard = ({ category }) => {
-    const className = `btn btn-outline ${category.class} m-2 no-animation btn-sm md:btn-lg`;
-    const isDisabled = !!selectedCategory;
-    const name = userData?.name || userData?.email;
-    return (
-      <button
-        className={className}
-        onClick={() => socket.emit('category', name, category.label)}
-        disabled={isDisabled}
-      >
-        {category.label}
-      </button>
-    );
-  };
-
-  const UserCategoryCard = ({ categoryName, color }) => {
-    console.log('color: ', color);
-    const className = `btn btn-outline ${color} m-2 no-animation btn-sm md:btn-lg`;
-    const isDisabled = !!selectedCategory;
-    const name = userData?.name || userData?.email;
-    return (
-      <button
-        className={className}
-        onClick={() => socket.emit('category', name, categoryName)}
-        disabled={isDisabled}
-      >
-        {categoryName}
-      </button>
-    );
-  };
-
-  const StandupList = () => {
-    return (
-      <div className='flex flex-wrap flex-col'>
-        <div className='flex flex-wrap'>
-          <ClientOnly fallback={<div />}>
-            {() => {
-              const randomInterval = (() => {
-                const random = (min, max) => Math.random() * (max - min) + min;
-                return (callback, min, max) => {
-                  const time = {
-                    start: performance.now(),
-                    total: random(min, max),
-                  };
-                  const tick = (now) => {
-                    if (time.total <= now - time.start) {
-                      time.start = now;
-                      time.total = random(min, max);
-                      callback();
-                    }
-                    requestAnimationFrame(tick);
-                  };
-                  requestAnimationFrame(tick);
-                };
-              })();
-
-              // randomInterval(() => console.log('hi'), 1000, 2000); // logs "hi" at a random interval between 1 and 2s
-              return players.map((p, i) => {
-                return (
-                  <div key={i} className='prose ml-14'>
-                    <h2>{p.name}</h2>
-                  </div>
-                );
-              });
-            }}
-          </ClientOnly>
-        </div>
-
-        <div className='p-14'>
-          <button className='btn btn-primary'>Spin Wheel</button>
-        </div>
-      </div>
-    );
-  };
-
-  const SelectCategoryCard = () => {
-    if (!minPlayers) {
-      return <div>Set min players!</div>;
-    }
-    if (players.length < minPlayers) {
-      return (
-        <div className='prose'>
-          <h2>Waiting for more players...</h2>
-        </div>
-      );
-    } else {
-      if (!standup.isBowpourri) {
-        return <StandupList />;
-      }
-      const filteredCategories = selectedCategory
-        ? categories.filter((x) => x.label === selectedCategory)
-        : categories;
-      if (selectedCategory) {
-        return (
-          <div className='prose'>
-            <h3>{categorySelector} chose</h3>
-            <h2>{selectedCategory}</h2>
-          </div>
-        );
-      }
-      return (
-        <div className='h-[100vw]'>
-          Choose a category:
-          <div className='flex flex-row flex-wrap items-start'>
-            {filteredCategories.map((cat, i) => {
-              return <CategoryCard key={i} category={cat} />;
-            })}
-          </div>
-          <div className='card text-center'>
-            <div className='card-body overflow-y-auto h-full'>
-              {Object.entries(userCategories).map(
-                ([userName, userCats], index) => {
-                  const randomColor = tailwindColor.pick();
-                  return (
-                    <div
-                      className='card md:flex-row items-start justify-start text-center'
-                      key={index}
-                    >
-                      <div className='card-title'>{userName}</div>
-                      <div className='card-body flex-row items-start justify-start flex-wrap'>
-                        {userCats.map((cat, i) => {
-                          return (
-                            <UserCategoryCard
-                              key={i}
-                              categoryName={cat.name}
-                              color={randomColor}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                  // return <UserCategoryCard key={i} category={cat} color="gray" />;
-                }
-              )}
-            </div>
-          </div>
-        </div>
-      );
-    }
-  };
-
   const displayAnswer = () => {
     if (!correctAnswer) {
       return <div />;
@@ -550,6 +358,7 @@ export default function TriviaIndex() {
           <div>Correct Answer: {correctAnswer.option}</div>
           <div className='text-lg'>{answerContext}</div>
           {showImg()}
+          <BowpourriStartModal />
         </div>
       );
     } else {
@@ -559,6 +368,7 @@ export default function TriviaIndex() {
           <div>Correct Answer: {correctAnswer.option}</div>
           <div className='text-lg'>{answerContext}</div>
           {showImg()}
+          <BowpourriStartModal />
         </div>
       );
     }
@@ -586,66 +396,6 @@ export default function TriviaIndex() {
   };
 
   const unanswered = players.filter((x) => !x.answered);
-
-  const PlayerStatus = ({ player }) => {
-    const { name, answered, isCorrect } = player;
-    let answerIcon;
-    if (correctAnswer) {
-      // const isCorrect = correctAnswer.option == selectedOption;
-      if (isCorrect == true) {
-        answerIcon = <CheckBadgeIcon className='h-6 w-6 text-green-500' />;
-      } else if (isCorrect == false) {
-        answerIcon = <FaceFrownIcon className='text-warning-500 h-6 w-6' />;
-      }
-    } else if (answered) {
-      answerIcon = <CheckIcon className='h-6 w-6 text-green-500' />;
-    }
-    return (
-      <div className='flex'>
-        {name} {answerIcon}
-      </div>
-    );
-  };
-
-  const PlayerScoreRow = ({ player, rank }) => {
-    const { score, name } = player;
-    return (
-      <tr>
-        <td className={tableCellBg}>{rank}</td>
-        <td className={tableCellBg}>{name}</td>
-        <td className={tableCellBg}>{score || 0}</td>
-      </tr>
-    );
-  };
-
-  const PlayerScores = () => {
-    if (!playerStats) {
-      return <div>No player scores yet!</div>;
-    }
-    const scores = playerStats.sort((a, b) => {
-      return b.score - a.score;
-    });
-    return (
-      <div className='card md:w-96'>
-        <table className={`table-compact table w-full ${tableContentColor}`}>
-          <thead>
-            <tr>
-              <th className={tableCellBg}></th>
-              <th className={tableCellBg}>Name</th>
-              <th className={tableCellBg}>Score</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scores.map((player, index) => {
-              return (
-                <PlayerScoreRow key={index} player={player} rank={index + 1} />
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
 
   const NewGameButton = () => {
     if (!gameComplete && signedIn && selectedCategory) {
@@ -685,6 +435,21 @@ export default function TriviaIndex() {
     );
   };
 
+  const selectCategory = () => {
+    return (
+      <SelectCategoryCard
+        standup={standup}
+        selectedCategory={selectedCategory}
+        categories={categories}
+        players={players}
+        minPlayers={minPlayers}
+        userCategories={userCategories}
+        userData={userData}
+        socket={socket}
+      />
+    );
+  };
+
   const PlayerSpinWheel = () => {
     const [winningPlayer, setWinningPlayer] = useState<PlayerData>();
 
@@ -700,10 +465,40 @@ export default function TriviaIndex() {
       socket.emit('handleSpin');
     };
 
+    if (!standup) {
+      return <div>Waiting for more players</div>;
+    }
+
+    const { nextSpinner, nextWinnerEmail, isComplete } = standup;
+    console.log('nextSpinner: ', nextSpinner);
+
+    const isPlayer = nextSpinner?.email === user.email;
+
     return (
-      <div className='container mx-100'>
-        <div className='flex items-center justify-center h-screen'>
-          <ClientOnly fallback={<div />}>
+      <div className='container mx-auto'>
+        <div className='flex flex-wrap flex-col justify-between'>
+          {isPlayer ? (
+            selectCategory()
+          ) : (
+            <div className=''>{nextSpinner?.name}, You're up!</div>
+          )}
+          {selectedCategory ? (
+            <ShowQuestion
+              newGame={newGame}
+              signedIn={signedIn}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+            />
+          ) : (
+            ''
+          )}
+          {newGame && unanswered.length > 0 ? (
+            <div>Waiting on: {unanswered.map((p, i) => p.name).join(', ')}</div>
+          ) : (
+            <ShowAnswer />
+          )}
+
+          {/* <ClientOnly fallback={<div />}>
             {() => (
               <SpinWheel
                 userData={userData}
@@ -713,10 +508,11 @@ export default function TriviaIndex() {
                 onStopSpin={onStopSpin}
               />
             )}
-          </ClientOnly>
-          <div className='relative prose lg:prose-xl text-success'>
+          </ClientOnly> */}
+
+          {/* <div className='relative prose lg:prose-xl text-success'>
             <h1>{winningPlayer?.name}</h1>
-          </div>
+          </div> */}
         </div>
       </div>
     );
@@ -749,103 +545,34 @@ export default function TriviaIndex() {
 
   const yourCategories = userCategories?.[userData?.name];
 
-  const PlayerTableCard = () => {
+  console.log('showSpinWheel: ', showSpinWheel);
+
+  const optionsModal = () => {
     return (
-      <div className='card border-accent bg-base-200 text-accent'>
-        <div className='card-body'>
-          <div className='flex items-start justify-start '>
-            <div className='w-100 card-title flex-1 flex-row justify-between'>
-              <h2>Players</h2>
-              <button
-                className='btn-sm btn-square btn'
-                onClick={() => setShowOptions(true)}
-              >
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={1.5}
-                  stroke='currentColor'
-                  className='h-6 w-6'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 016.336-4.486l-3.276 3.276a3.004 3.004 0 002.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852z'
-                  />
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M4.867 19.125h.008v.008h-.008v-.008z'
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <ul>
-            {players.map((player, index) => {
-              return (
-                <li key={index}>
-                  <PlayerStatus player={player} />
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
+      <OptionsModal
+        showOptions={showOptions}
+        setShowOptions={setShowOptions}
+        minPlayers={minPlayers}
+        optionMinPlayers={optionMinPlayers}
+        editOptions={editOptions}
+        handleMinPlayerOptionUpdate={handleMinPlayerOptionUpdate}
+      />
     );
   };
 
-  const OptionsModal = () => {
+  const playerTableCard = () => {
     return (
-      <div className={optionsModalClass}>
-        <div className='modal-box relative'>
-          <label
-            className='btn-sm btn-circle btn absolute right-2 top-2'
-            onClick={() => setShowOptions(false)}
-          >
-            ✕
-          </label>
-          <h3 className='text-lg font-bold'>Options</h3>
-          <div className='p-5'>
-            <div className='form-control'>
-              <label className='label'>
-                <span className='label-text-alt'>Min Players</span>
-              </label>
-              {minPlayers && (
-                <input
-                  type='number'
-                  className='input-bordered input'
-                  // defaultValue={optionMinPlayers}
-                  value={optionMinPlayers}
-                  onChange={handleMinPlayerOptionUpdate}
-                />
-              )}
-            </div>
-            <div className='form-control'>
-              <label className='label'>
-                <span className='label-text-alt'>Countdown Seconds</span>
-              </label>
-              <input
-                type='number'
-                className='input-bordered input'
-                // defaultValue={optionMinPlayers}
-                value={countdownSeconds}
-                onChange={(e) => setCountdownSeconds(e.target.value)}
-              />
-            </div>
-            <div className='mt-5'>
-              <div className='btn-accent btn' onClick={editOptions}>
-                Save
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PlayerTableCard
+        players={players}
+        setShowOptions={setShowOptions}
+        standup={standup}
+        correctAnswer={correctAnswer}
+      />
     );
   };
 
   if (showSpinWheel) {
+    console.log('signedIn: ', signedIn);
     if (!signedIn) {
       return (
         <div className='container mx-auto'>
@@ -857,9 +584,7 @@ export default function TriviaIndex() {
                 </button>
               </div>
             </div>
-            <div className='basis-1/4'>
-              <PlayerTableCard />
-            </div>
+            <div className='basis-1/4'>{playerTableCard()}</div>
           </div>
         </div>
       );
@@ -876,11 +601,9 @@ export default function TriviaIndex() {
                 <h2>Waiting for more players...</h2>
               </div>
             </div>
-            <div className='basis-1/4'>
-              <PlayerTableCard />
-            </div>
+            <div className='basis-1/4'>{playerTableCard()}</div>
           </div>
-          <OptionsModal />
+          {optionsModal()}
         </div>
       );
     }
@@ -891,166 +614,50 @@ export default function TriviaIndex() {
           <div className='basis-3/4 pr-6'>
             <PlayerSpinWheel />
           </div>
-          <div className='basis-1/4'>
-            <PlayerTableCard />
+          <div className='basis-1/4'>{playerTableCard()}</div>
+        </div>
+        <div className={playerScoreModalClass}>
+          <div className='modal-box relative'>
+            <label
+              className='btn-sm btn-circle btn absolute right-2 top-2'
+              onClick={() => setShowPlayerScores(false)}
+            >
+              ✕
+            </label>
+            {correctAnswer && displayAnswer()}
+
+            {/* <h3 className='text-lg font-bold'>Winner's Circle</h3> */}
+            {/* <PlayerScores /> */}
+            <NewGameButton />
           </div>
         </div>
-        <OptionsModal />
+        {optionsModal()}
+        <div className='btm-nav btm-nav-lg h-auto p-5 invisible md:visible'>
+          <div>
+            {!newGame && (
+              <CategoryForm handleSaveCategory={handleSaveCategory} />
+            )}
+          </div>
+          <div>
+            <h2>Your Categories</h2>
+            {yourCategories?.map((yourCategory, i) => {
+              return (
+                <button
+                  key={i}
+                  className='btn-sm btn gap-2'
+                  onClick={() => socket.emit('deleteCategory', yourCategory.id)}
+                >
+                  {yourCategory.name}
+                  <XMarkIcon className='h-6 w-6 text-slate-500' />
+                </button>
+              );
+            })}
+          </div>
+          <div className='p-1'>
+            <PlayerScores playerStats={playerStats} />
+          </div>
+        </div>
       </div>
     );
   }
-
-  return (
-    <>
-      <div className='container mx-auto'>
-        <div className='flex flex-wrap justify-between'>
-          <div className='basis-3/4 pr-6'>
-            {!signedIn ? <SignInCard /> : <SelectCategoryCard />}
-            {selectedCategory ? <ShowQuestion /> : ''}
-            {newGame && unanswered.length > 0 ? (
-              <div>
-                Waiting on: {unanswered.map((p, i) => p.name).join(', ')}
-              </div>
-            ) : (
-              <ShowAnswer />
-            )}
-          </div>
-          <div className='basis-1/4'>
-            <PlayerTableCard />
-            <div className='basis-full md:basis-1/4'>
-              <div className='card border-accent bg-base-200 text-accent'>
-                <div className='card-body'>
-                  <div className='flex items-start justify-start '>
-                    <div className='w-100 card-title flex-1 flex-row justify-between'>
-                      <h2>Players</h2>
-                      <button
-                        className='btn-sm btn-square btn'
-                        onClick={() => setShowOptions(true)}
-                      >
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          fill='none'
-                          viewBox='0 0 24 24'
-                          strokeWidth={1.5}
-                          stroke='currentColor'
-                          className='h-6 w-6'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            d='M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 016.336-4.486l-3.276 3.276a3.004 3.004 0 002.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852z'
-                          />
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            d='M4.867 19.125h.008v.008h-.008v-.008z'
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                    {/* <label
-                    className="btn"
-                    onClick={() => setShowPlayerScores(true)}
-                  >
-                    Stats
-                  </label> */}
-                  </div>
-                  <ul>
-                    {players.map((player, index) => {
-                      return (
-                        <li key={index}>
-                          <PlayerStatus player={player} />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </div>
-
-              <GameActions />
-            </div>
-          </div>
-          <div className={playerScoreModalClass}>
-            <div className='modal-box relative'>
-              <label
-                className='btn-sm btn-circle btn absolute right-2 top-2'
-                onClick={() => setShowPlayerScores(false)}
-              >
-                ✕
-              </label>
-              {correctAnswer && displayAnswer()}
-
-              {/* <h3 className='text-lg font-bold'>Winner's Circle</h3> */}
-              {/* <PlayerScores /> */}
-              <NewGameButton />
-            </div>
-          </div>
-          <OptionsModal />
-          <BowpourriStartModal />
-          <div className={optionsModalClass}>
-            <div className='modal-box relative'>
-              <label
-                className='btn-sm btn-circle btn absolute right-2 top-2'
-                onClick={() => setShowOptions(false)}
-              >
-                ✕
-              </label>
-              <h3 className='text-lg font-bold'>Options</h3>
-              <div className='p-5'>
-                <div className='form-control'>
-                  <label className='label'>
-                    <span className='label-text-alt'>Min Players</span>
-                  </label>
-                  {minPlayers && (
-                    <input
-                      type='number'
-                      className='input-bordered input'
-                      // defaultValue={optionMinPlayers}
-                      value={optionMinPlayers}
-                      onChange={handleMinPlayerOptionUpdate}
-                    />
-                  )}
-                </div>
-                <div className='form-control'></div>
-                <div className='mt-5'>
-                  <div className='btn-accent btn' onClick={editOptions}>
-                    Save
-                  </div>
-                </div>
-                <button
-                  className='btn btn-accent'
-                  onClick={() => socket.emit('clearPlayerStats')}
-                >
-                  Reset Scores
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className='btm-nav btm-nav-lg h-auto p-5 invisible md:visible'>
-        <div>
-          {!newGame && <CategoryForm handleSaveCategory={handleSaveCategory} />}
-        </div>
-        <div>
-          <h2>Your Categories</h2>
-          {yourCategories?.map((yourCategory, i) => {
-            return (
-              <button
-                key={i}
-                className='btn-sm btn gap-2'
-                onClick={() => socket.emit('deleteCategory', yourCategory.id)}
-              >
-                {yourCategory.name}
-                <XMarkIcon className='h-6 w-6 text-slate-500' />
-              </button>
-            );
-          })}
-        </div>
-        <div className='p-1'>
-          <PlayerScores />
-        </div>
-      </div>
-    </>
-  );
 }
