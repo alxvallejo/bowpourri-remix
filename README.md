@@ -60,3 +60,7 @@ netlify deploy --build
 # production deployment
 netlify deploy --build --prod
 ```
+
+## Nodemon w/ node version
+
+https://jamie-white.com/code/using-nodemon-with-nvm-node-js/

@@ -1,4 +1,13 @@
-export const displayAnswer = ({ correctAnswer, answerImg, selectedOption }) => {
+import { Player, Standup } from '../types';
+
+export const displayAnswer = (
+  correctAnswer,
+  answerImg,
+  selectedOption,
+  answerContext,
+  standup: Standup,
+  handlePlayAgain
+) => {
   if (!correctAnswer) {
     return <div />;
   }
@@ -20,6 +29,23 @@ export const displayAnswer = ({ correctAnswer, answerImg, selectedOption }) => {
     }
     return <div />;
   };
+
+  const { nextSpinner } = standup;
+
+  const showNextGame = () => {
+    if (nextSpinner) {
+      return (
+        <div className='text-center mt-3'>
+          <button className='btn-primary btn' onClick={handlePlayAgain}>
+            {nextSpinner.name} is next!
+          </button>
+        </div>
+      );
+    } else {
+      return <div className='text-lg'>No next spinner</div>;
+    }
+  };
+
   const isCorrect = correctAnswer.option == selectedOption;
   if (isCorrect) {
     return (
@@ -28,6 +54,7 @@ export const displayAnswer = ({ correctAnswer, answerImg, selectedOption }) => {
         <div>Correct Answer: {correctAnswer.option}</div>
         <div className='text-lg'>{answerContext}</div>
         {showImg()}
+        {showNextGame()}
       </div>
     );
   } else {
@@ -37,6 +64,7 @@ export const displayAnswer = ({ correctAnswer, answerImg, selectedOption }) => {
         <div>Correct Answer: {correctAnswer.option}</div>
         <div className='text-lg'>{answerContext}</div>
         {showImg()}
+        {showNextGame()}
       </div>
     );
   }

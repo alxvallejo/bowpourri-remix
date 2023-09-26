@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import TailwindColor from '../../../../tailwindColor';
+import { typeWrite } from '../typeWrite.client';
 const tailwindColor = new TailwindColor(null);
 
 const CategoryCard = ({ category, selectedCategory, userData, socket }) => {
-  const className = `btn btn-outline ${category.class} m-2 no-animation btn-sm md:btn-lg`;
+  const className = `btn btn-outline ${category.class} m-2 no-animation btn-sm md:btn-md`;
   const isDisabled = !!selectedCategory;
   const name = userData?.name || userData?.email;
   return (
@@ -19,6 +21,7 @@ const CategoryCard = ({ category, selectedCategory, userData, socket }) => {
 export const SelectCategoryCard = ({
   standup,
   selectedCategory,
+  newGame,
   categories,
   players,
   minPlayers,
@@ -44,12 +47,15 @@ export const SelectCategoryCard = ({
       ? categories.filter((x) => x.label === selectedCategory)
       : categories;
     if (selectedCategory) {
-      return (
-        <div className='prose'>
-          <h3>{standup?.nextSpinner?.name} chose</h3>
-          <h2>{selectedCategory}</h2>
-        </div>
-      );
+      if (newGame) {
+        return <div className='text-xl'>Bowpourri</div>;
+      } else {
+        return (
+          <div className='text-xl'>
+            {standup?.nextSpinner?.name} chose {selectedCategory}
+          </div>
+        );
+      }
     }
     return (
       <div className='h-[100vw]'>
@@ -112,7 +118,7 @@ const UserCategoryCard = ({
   socket,
 }) => {
   console.log('color: ', color);
-  const className = `btn btn-outline ${color} m-2 no-animation btn-sm md:btn-lg`;
+  const className = `btn btn-outline ${color} m-2 no-animation btn-sm md:btn-md`;
   const isDisabled = !!selectedCategory;
   const name = userData?.name || userData?.email;
   return (
@@ -132,6 +138,7 @@ export const ShowQuestion = ({
   selectedOption,
   setSelectedOption,
 }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
   if (!newGame) {
     return (
       <div>
@@ -148,10 +155,16 @@ export const ShowQuestion = ({
         </div>
       );
     }
+
+    const handleNextWrite = () => {
+      setCurrentIndex(currentIndex + 1);
+    };
     return (
       <div className='prose flex flex-col items-start'>
         Today's question:
-        <h3 className='border-r-ghost p-5 text-accent'>{newGame.question}</h3>
+        <h3 className='border-r-ghost p-5 text-accent'>
+          {typeWrite(newGame.question, currentIndex, 0, handleNextWrite)}
+        </h3>
         {newGame.options?.map((option, i) => {
           return (
             <div className='form-control' key={i}>

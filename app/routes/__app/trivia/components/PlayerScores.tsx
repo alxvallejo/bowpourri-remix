@@ -50,13 +50,12 @@ export const PlayerScores = ({ playerStats }) => {
 
 export const PlayerStatus = ({ player, standup, correctAnswer }) => {
   const { name, answered, isCorrect } = player;
-  let border = 'px-2 py-1';
+  let border = 'flex px-2 py-1';
   if (standup?.nextSpinner?.email === player?.email) {
     border += ' border-2 rounded-lg border-primary';
   }
   let answerIcon;
   if (correctAnswer) {
-    // const isCorrect = correctAnswer.option == selectedOption;
     if (isCorrect == true) {
       answerIcon = <CheckBadgeIcon className='h-6 w-6 text-green-500' />;
     } else if (isCorrect == false) {
@@ -85,9 +84,9 @@ export const PlayerTableCard = ({
     return <div></div>;
   }
   return (
-    <div className='card border-accent bg-base-200 text-accent'>
+    <div className='card border-accent bg-base-200 text-accent mb-3'>
       <div className='card-body'>
-        <div className='flex items-start justify-start '>
+        <div className='flex items-start justify-start'>
           <div className='w-100 card-title flex-1 flex-row justify-between'>
             <h2>Players</h2>
             <button
