@@ -18,7 +18,21 @@ export interface Standup {
   categorySelector: Player | undefined;
   isBowpourri: boolean;
   isComplete: boolean;
-  nextSpinner: Player;
+  nextSpinner: Player | undefined;
   nextWinnerEmail: String | null;
   players: Player[];
 }
+
+export type AnimationsComplete = {
+  question: boolean;
+  opt1: boolean;
+  opt2: boolean;
+  opt3: boolean;
+  opt4: boolean;
+};
+
+export type AnimationAnswer = {
+  header: boolean;
+  answer: boolean;
+  context: boolean;
+};

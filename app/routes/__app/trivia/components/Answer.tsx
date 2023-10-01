@@ -1,16 +1,16 @@
-import { Player, Standup } from '../types';
+import { Player, Standup, AnimationAnswer } from '../types';
+import { TypeWriteSequence, TypeWrite } from '../TypeWrite.client';
 
-export const displayAnswer = (
+export const DisplayAnswer = ({
   correctAnswer,
   answerImg,
   selectedOption,
   answerContext,
-  standup: Standup,
-  handlePlayAgain
-) => {
-  if (!correctAnswer) {
-    return <div />;
-  }
+  standup,
+  handlePlayAgain,
+  answerAnimationState,
+  setAnswerAnimationState,
+}) => {
   const showImg = () => {
     if (answerImg) {
       const { image, keywords } = answerImg;
@@ -32,6 +32,13 @@ export const displayAnswer = (
 
   const { nextSpinner } = standup;
 
+  const onComplete = (name: string) => {
+    let newAnimationState = answerAnimationState;
+    newAnimationState[name] = true;
+    console.log('newAnimationState: ', newAnimationState);
+    setAnswerAnimationState(newAnimationState);
+  };
+
   const showNextGame = () => {
     if (nextSpinner) {
       return (
@@ -42,51 +49,67 @@ export const displayAnswer = (
         </div>
       );
     } else {
-      return <div className='text-lg'>No next spinner</div>;
+      return (
+        <div className='text-lg'>
+          {TypeWrite(
+            'Bowpourri has concluded. You may carry on with your day.',
+            7
+          )}
+        </div>
+      );
     }
   };
 
   const isCorrect = correctAnswer.option == selectedOption;
-  if (isCorrect) {
-    return (
-      <div className='prose lg:prose-md mb-6'>
-        <h2 className='text-success'>Congratulations!</h2>
-        <div>Correct Answer: {correctAnswer.option}</div>
-        <div className='text-lg'>{answerContext}</div>
-        {showImg()}
-        {showNextGame()}
-      </div>
-    );
-  } else {
-    return (
-      <div className='prose lg:prose-md mb-6'>
-        <h3 className='text-info'>Sorry, you are incorrect.</h3>
-        <div>Correct Answer: {correctAnswer.option}</div>
-        <div className='text-lg'>{answerContext}</div>
-        {showImg()}
-        {showNextGame()}
-      </div>
-    );
+
+  if (!correctAnswer) {
+    console.log('no correct answer');
+    return <div />;
   }
+
+  return (
+    <div className='prose lg:prose-md my-6 mx-16'>
+      {isCorrect ? (
+        <h2 className='text-success'>
+          {TypeWriteSequence(
+            'Congratulations!',
+            'header',
+            answerAnimationState['header'],
+            onComplete
+          )}
+        </h2>
+      ) : (
+        <h2 className='text-info'>
+          {TypeWriteSequence(
+            'Sorry, you are incorrect.',
+            'header',
+            answerAnimationState['header'],
+            onComplete
+          )}
+        </h2>
+      )}
+
+      <div>
+        Correct Answer:{' '}
+        {TypeWriteSequence(
+          correctAnswer.option,
+          'answer',
+          answerAnimationState['answer'],
+          onComplete,
+          3
+        )}
+      </div>
+      <div className='text-lg'>
+        {TypeWriteSequence(
+          answerContext,
+          'context',
+          answerAnimationState['context'],
+          onComplete,
+          5
+        )}
+      </div>
+      {showImg()}
+      {showNextGame()}
+    </div>
+  );
 };
-
-//   const handleAnswer = ({ seconds, completed }) => {
-//     if (correctAnswer) {
-//       displayAnswer();
-//     } else {
-//       return <div>Letting you change your mind for {seconds} seconds...</div>;
-//     }
-//   };
-
-//   const ShowAnswer = () => {
-//     if (newGame) {
-//       const ms = ANSWER_BUFFER * 1000;
-//       return (
-//         <div>
-//           <Countdown date={Date.now() + ms} renderer={handleAnswer} />
-//         </div>
-//       );
-//     } else {
-//       return <div />;
-//     }
-//   };

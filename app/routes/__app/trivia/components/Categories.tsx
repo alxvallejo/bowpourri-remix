@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TailwindColor from '../../../../tailwindColor';
-import { typeWrite } from '../typeWrite.client';
+import { TypeWriteSequence } from '../TypeWrite.client';
 const tailwindColor = new TailwindColor(null);
 
 const CategoryCard = ({ category, selectedCategory, userData, socket }) => {
@@ -40,21 +40,18 @@ export const SelectCategoryCard = ({
       </div>
     );
   } else {
-    // if (!standup.isBowpourri) {
-    //   return <StandupList />;
-    // }
     const filteredCategories = selectedCategory
       ? categories.filter((x) => x.label === selectedCategory)
       : categories;
     if (selectedCategory) {
-      if (newGame) {
-        return <div className='text-xl'>Bowpourri</div>;
-      } else {
+      if (standup?.nextSpinner?.name) {
         return (
           <div className='text-xl'>
-            {standup?.nextSpinner?.name} chose {selectedCategory}
+            {standup?.categorySelector?.name} chose {selectedCategory}
           </div>
         );
+      } else {
+        return <div className='text-xl'>Bowpourri</div>;
       }
     }
     return (
@@ -117,7 +114,7 @@ const UserCategoryCard = ({
   userData,
   socket,
 }) => {
-  console.log('color: ', color);
+  // console.log('color: ', color);
   const className = `btn btn-outline ${color} m-2 no-animation btn-sm md:btn-md`;
   const isDisabled = !!selectedCategory;
   const name = userData?.name || userData?.email;
@@ -132,13 +129,45 @@ const UserCategoryCard = ({
   );
 };
 
+type AnimationSequence = {
+  key: string;
+  complete: boolean;
+};
+
+const defaultSequence = [
+  {
+    key: 'question',
+    complete: false,
+  },
+  {
+    key: 'opt1',
+    complete: false,
+  },
+  {
+    key: 'opt2',
+    complete: false,
+  },
+  {
+    key: 'opt3',
+    complete: false,
+  },
+  {
+    key: 'opt4',
+    complete: false,
+  },
+];
+
 export const ShowQuestion = ({
   newGame,
   signedIn,
   selectedOption,
   setSelectedOption,
+  animationState,
+  setAnimationState,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [sequence, setSequence] =
+    useState<AnimationSequence[]>(defaultSequence);
+  console.log('animationState: ', animationState);
   if (!newGame) {
     return (
       <div>
@@ -156,31 +185,68 @@ export const ShowQuestion = ({
       );
     }
 
-    const handleNextWrite = () => {
-      setCurrentIndex(currentIndex + 1);
+    const onComplete = (name: string) => {
+      let newAnimationState = animationState;
+      newAnimationState[name] = true;
+      setAnimationState(newAnimationState);
     };
+
     return (
       <div className='prose flex flex-col items-start'>
         Today's question:
-        <h3 className='border-r-ghost p-5 text-accent'>
-          {typeWrite(newGame.question, currentIndex, 0, handleNextWrite)}
+        <h3 className='border-r-ghost p-5 text-accent font-mono'>
+          {TypeWriteSequence(
+            newGame.question,
+            'question',
+            animationState['question'],
+            onComplete
+          )}
         </h3>
         {newGame.options?.map((option, i) => {
+          const selected = selectedOption == option;
+          const className = selected
+            ? `btn btn-primary no-animation font-mono mt-2`
+            : `btn btn-neutral no-animation font-mono mt-2`;
+          console.log('i: ', i);
+          const animationKey = `opt${i + 1}`;
+          // const startAnimation = i === 0 ? true : animationState[`opt${i + 1}`];
           return (
             <div className='form-control' key={i}>
-              <label className='label cursor-pointer'>
-                <input
+              {/* <label className='label cursor-pointer'> */}
+              {/* <input
                   type='radio'
                   name='radio-10'
                   className='radio mr-4 radio-lg radio-accent'
                   onChange={() => setSelectedOption(option)}
                   checked={selectedOption == option}
                 />
-                <span className='label-text text-lg'>{option}</span>
-              </label>
+                <span className='label-text text-lg'>
+                  
+                </span> */}
+              <button
+                // type='checkbox'
+                // aria-label='Checkbox'
+                className={className}
+                onClick={() => setSelectedOption(option)}
+                // checked={selectedOption == option}
+              >
+                {TypeWriteSequence(
+                  option,
+                  animationKey,
+                  animationState[animationKey],
+                  onComplete,
+                  i + 1
+                )}
+              </button>
+              {/* </label> */}
             </div>
           );
         })}
+        {/* {selectedOption && (
+          <span className='countdown'>
+            <span style={{ "--value": 5 }}></span>
+          </span>
+        )} */}
       </div>
     );
   }

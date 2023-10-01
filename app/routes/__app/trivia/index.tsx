@@ -13,14 +13,20 @@ import { StandupList } from './components/Standup';
 import { categories } from './categories';
 import { CategoryForm } from './CategoryForm';
 import { SelectCategoryCard, ShowQuestion } from './components/Categories';
-import { displayAnswer } from './components/Answer';
+import { DisplayAnswer } from './components/Answer';
 import { OptionsModal } from './components/Options';
 import { useAnimationFrame } from 'framer-motion';
 import TailwindColor from '../../../tailwindColor';
 // import daisyThemes from 'daisyui/src/colors/themes';
 import { SpinWheel } from './spinWheel.client';
 import { ClientOnly } from 'remix-utils';
-import { PlayerData, Player, Standup } from './types';
+import {
+  PlayerData,
+  Player,
+  Standup,
+  AnimationsComplete,
+  AnimationAnswer,
+} from './types';
 
 import {
   PlayerScores,
@@ -40,6 +46,20 @@ const tailwindColor = new TailwindColor(null);
 const defaultStandup = {
   // players:
   isBowpourri: false,
+};
+
+const defaultAnimationState: AnimationsComplete = {
+  question: false,
+  opt1: false,
+  opt2: false,
+  opt3: false,
+  opt4: false,
+};
+
+const defaultAnswerAnimationState: AnimationAnswer = {
+  header: false,
+  answer: false,
+  context: false,
 };
 
 export default function TriviaIndex() {
@@ -71,6 +91,11 @@ export default function TriviaIndex() {
   const [countdownSeconds, setCountdownSeconds] = useState(15);
   const [standup, setStandup] = useState<Standup>(defaultStandup);
   const [answerImg, setAnswerImg] = useState();
+  const [animationState, setAnimationState] = useState<AnimationsComplete>(
+    defaultAnimationState
+  );
+  const [answerAnimationState, setAnswerAnimationState] =
+    useState<AnimationAnswer>(defaultAnswerAnimationState);
 
   const { socket, currentTheme } = useOutletContext();
 
@@ -98,7 +123,8 @@ export default function TriviaIndex() {
 
   // Inbound
   const handleRefreshWheel = (players, selectedSpinner) => {
-    console.log('handleRefreshWheel: ', selectedSpinner);
+    console.log('selectedSpinner: ', selectedSpinner);
+    console.log('handleRefreshWheel: ', players);
 
     let newStandup = {
       players,
@@ -106,26 +132,33 @@ export default function TriviaIndex() {
       nextWinnerEmail: null,
       isComplete: players.length === 0,
       isBowpourri: false,
-      categorySelector: undefined,
+      categorySelector: selectedSpinner,
     };
     setStandup(newStandup);
   };
 
   const handleSpinResults = (
     nextWinnerEmail: string,
-    nextPlayers: Player[]
+    nextPlayers: Player[],
+    currentSpinner: string
   ) => {
-    console.log('MSG: Handling spin results');
+    console.log('currentSpinner: ', currentSpinner);
+
+    if (players.length === 0) {
+      console.log('NO PLAYERS: ', players);
+      // debugger;
+    }
     const isBowpourri = nextWinnerEmail === 'bowpourri';
-    const previousSpinner = standup.nextSpinner;
-    // const nextWinnerIndex = isBowpourri
-    //   ? null
-    //   : nextPlayers.findIndex((x) => x.email === nextWinnerEmail);
+    const categorySelector = currentSpinner
+      ? players.find((x) => x.email === currentSpinner)
+      : userData;
+
+    console.log('categorySelector: ', categorySelector);
     const nextSpinner = isBowpourri
-      ? null
+      ? undefined
       : nextPlayers.find((x) => x.email === nextWinnerEmail);
     console.log('nextSpinner: ', nextSpinner);
-    console.log('players: ', players);
+
     console.log('nextPlayers: ', nextPlayers);
     console.log('nextWinnerEmail: ', nextWinnerEmail);
     setStandup({
@@ -135,7 +168,7 @@ export default function TriviaIndex() {
       // nextWinnerIndex,
       nextSpinner,
       isBowpourri: nextWinnerEmail === 'bowpourri',
-      categorySelector: isBowpourri ? previousSpinner?.email : null,
+      categorySelector,
     });
     // if (isBowpourri) {
     //   console.log('setting isBowpourri to true');
@@ -165,6 +198,12 @@ export default function TriviaIndex() {
     setCountdownCompleted(false);
     setCorrectAnswer();
     setAnswerImg();
+
+    // Refresh animation state
+    console.log('refreshing animation state');
+    debugger;
+    setAnimationState(defaultAnimationState);
+    setAnswerAnimationState(defaultAnswerAnimationState);
   };
 
   const handleResetGame = (msg) => {
@@ -208,12 +247,6 @@ export default function TriviaIndex() {
     }
   }, [playerStats]);
 
-  useEffect(() => {
-    if (players.length > 0) {
-      console.log('players: ', players);
-    }
-  }, [players]);
-
   const handleNewGame = (newGame) => {
     console.log('newGame: ', newGame);
     setSelectedCategory(newGame.category);
@@ -228,6 +261,11 @@ export default function TriviaIndex() {
     }
   };
 
+  const handleSetPlayers = (newPlayers) => {
+    console.log('handling NEW PLAYERS: ', newPlayers);
+    setPlayers(newPlayers);
+  };
+
   useEffect(() => {
     if (!socket) {
       return;
@@ -236,7 +274,7 @@ export default function TriviaIndex() {
       console.log('msg: ', msg);
     });
     socket.on('userScores', handleUserScores);
-    socket.on('players', setPlayers);
+    socket.on('players', handleSetPlayers);
     socket.on('category', handleCategory);
     socket.on('newGame', handleNewGame);
     socket.on('newGameError', setNewGameError);
@@ -266,7 +304,8 @@ export default function TriviaIndex() {
 
   useEffect(() => {
     if (user) {
-      console.log('user: ', user);
+      console.log('setting UserData: ', user);
+      // const { email, name, id } = user
       setUserData({
         email: user.email,
         name: user.name,
@@ -276,7 +315,10 @@ export default function TriviaIndex() {
   }, [user]);
 
   useEffect(() => {
-    console.log('players: ', players);
+    if (players.length > 0) {
+      console.log('players NOT EMPTY: ', players);
+    }
+    console.log('updating PLAYERS: ', players);
     if (players && players.find((x) => x.email == user.email)) {
       setSignedIn(true);
     } else {
@@ -292,20 +334,24 @@ export default function TriviaIndex() {
 
   const handleSignIn = () => {
     if (userData) {
-      console.log('userData: ', userData);
+      console.log('userData on SIGN IN: ', userData);
       socket.emit('signIn', userData);
     }
   };
 
-  const handleAnswer = ({ seconds, completed }) => {
+  const handleAnswer = () => {
     if (correctAnswer) {
-      displayAnswer(
-        correctAnswer,
-        answerImg,
-        selectedOption,
-        answerContext,
-        standup,
-        handlePlayAgain
+      return (
+        <DisplayAnswer
+          correctAnswer={correctAnswer}
+          answerImg={answerImg}
+          selectedOption={selectedOption}
+          answerContext={answerContext}
+          standup={standup}
+          handlePlayAgain={handlePlayAgain}
+          answerAnimationState={answerAnimationState}
+          setAnswerAnimationState={setAnswerAnimationState}
+        />
       );
     } else {
       return <div>Letting you change your mind for {seconds} seconds...</div>;
@@ -314,12 +360,26 @@ export default function TriviaIndex() {
 
   const ShowAnswer = () => {
     if (newGame) {
-      const ms = ANSWER_BUFFER * 1000;
-      return (
-        <div>
-          <Countdown date={Date.now() + ms} renderer={handleAnswer} />
-        </div>
-      );
+      if (unanswered.length > 0) {
+        return (
+          <div>Waiting on: {unanswered.map((p, i) => p.name).join(', ')}</div>
+        );
+      } else if (correctAnswer) {
+        return (
+          <DisplayAnswer
+            correctAnswer={correctAnswer}
+            answerImg={answerImg}
+            selectedOption={selectedOption}
+            answerContext={answerContext}
+            standup={standup}
+            handlePlayAgain={handlePlayAgain}
+            answerAnimationState={answerAnimationState}
+            setAnswerAnimationState={setAnswerAnimationState}
+          />
+        );
+      } else {
+        return <div>Waiting on other players...</div>;
+      }
     } else {
       return <div />;
     }
@@ -383,38 +443,30 @@ export default function TriviaIndex() {
 
   const PlayerSpinWheel = () => {
     const [winningPlayer, setWinningPlayer] = useState<Player>();
+    const { nextSpinner, nextWinnerEmail, isComplete, categorySelector } =
+      standup;
+    console.log('categorySelector: ', categorySelector);
 
     if (!players || players.length < 1) {
       return <div />;
     }
 
-    const onStopSpin = (player: Player) => {
-      setWinningPlayer(player);
-    };
-
-    const handleSpin = () => {
-      socket.emit('handleSpin');
-    };
-
     if (!standup) {
       return <div>Waiting for more players</div>;
     }
 
-    const { nextSpinner, nextWinnerEmail, isComplete } = standup;
-    console.log('nextSpinner: ', nextSpinner);
-
-    const isPlayer = nextSpinner?.email === user.email;
+    const isPlayer = categorySelector?.email === user.email;
 
     return (
-      <div className='container mx-auto'>
-        <div className='flex flex-wrap flex-col justify-between'>
+      <div className='container mx-16'>
+        <div className='flex flex-wrap flex-col justify-around'>
           {isPlayer || newGame ? (
             selectCategory()
           ) : !selectedCategory ? (
             <div className='text-xl'>{nextSpinner?.name}, You're up!</div>
           ) : (
             <div className='text-xl'>
-              {nextSpinner?.name} chose {selectedCategory}
+              {categorySelector?.name} chose {selectedCategory}
             </div>
           )}
           {selectedCategory ? (
@@ -423,15 +475,16 @@ export default function TriviaIndex() {
               signedIn={signedIn}
               selectedOption={selectedOption}
               setSelectedOption={setSelectedOption}
+              animationState={animationState}
+              setAnimationState={setAnimationState}
             />
           ) : (
-            ''
+            <div />
           )}
-          {newGame && unanswered.length > 0 ? (
+          {/* {newGame && unanswered.length > 0 && (
             <div>Waiting on: {unanswered.map((p, i) => p.name).join(', ')}</div>
-          ) : (
-            <ShowAnswer />
-          )}
+          )} */}
+          {/* <ShowAnswer /> */}
 
           {/* <ClientOnly fallback={<div />}>
             {() => (
@@ -477,8 +530,6 @@ export default function TriviaIndex() {
 
   const yourCategories = userCategories?.[userData?.name];
 
-  console.log('showSpinWheel: ', showSpinWheel);
-
   const optionsModal = () => {
     return (
       <OptionsModal
@@ -504,7 +555,6 @@ export default function TriviaIndex() {
   };
 
   if (showSpinWheel) {
-    console.log('signedIn: ', signedIn);
     if (!signedIn) {
       return (
         <div className='container mx-auto'>
@@ -545,39 +595,27 @@ export default function TriviaIndex() {
         </div>
       );
     }
-    console.log('showSpinWheel: ', showSpinWheel);
     return (
       <div className='container mx-auto'>
         <div className='flex flex-wrap justify-between'>
           <div className='basis-3/4 pr-6'>
             <PlayerSpinWheel />
+            {correctAnswer && (
+              <DisplayAnswer
+                correctAnswer={correctAnswer}
+                answerImg={answerImg}
+                selectedOption={selectedOption}
+                answerContext={answerContext}
+                standup={standup}
+                handlePlayAgain={handlePlayAgain}
+                answerAnimationState={answerAnimationState}
+                setAnswerAnimationState={setAnswerAnimationState}
+              />
+            )}
           </div>
           <div className='basis-1/4'>
             {playerTableCard()}
             <StandupList standup={standup} />
-          </div>
-        </div>
-        <div className={playerScoreModalClass}>
-          <div className='modal-box relative'>
-            <label
-              className='btn-sm btn-circle btn absolute right-2 top-2'
-              onClick={() => setShowPlayerScores(false)}
-            >
-              ✕
-            </label>
-            {correctAnswer &&
-              displayAnswer(
-                correctAnswer,
-                answerImg,
-                selectedOption,
-                answerContext,
-                standup,
-                handlePlayAgain
-              )}
-
-            {/* <h3 className='text-lg font-bold'>Winner's Circle</h3> */}
-            {/* <PlayerScores /> */}
-            <NewGameButton />
           </div>
         </div>
         {optionsModal()}
@@ -587,23 +625,40 @@ export default function TriviaIndex() {
               <CategoryForm handleSaveCategory={handleSaveCategory} />
             )}
           </div>
-          <div>
-            <h2>Your Categories</h2>
-            {yourCategories?.map((yourCategory, i) => {
-              return (
-                <button
-                  key={i}
-                  className='btn-sm btn gap-2'
-                  onClick={() => socket.emit('deleteCategory', yourCategory.id)}
-                >
-                  {yourCategory.name}
-                  <XMarkIcon className='h-6 w-6 text-slate-500' />
-                </button>
-              );
-            })}
+          <div className='dropdown dropdown-top'>
+            <label tabIndex={0} className='btn m-1'>
+              Your Categories
+            </label>
+            <div
+              tabIndex={0}
+              className='dropdown-content z-[1] menu p-2 shadow bg-secondary rounded-box w-auto'
+            >
+              {yourCategories?.map((yourCategory, i) => {
+                return (
+                  <button
+                    key={i}
+                    className='btn-sm btn gap-2 my-2 bg-secondary-content'
+                    onClick={() =>
+                      socket.emit('deleteCategory', yourCategory.id)
+                    }
+                  >
+                    {yourCategory.name}
+                    <XMarkIcon className='h-6 w-6 text-slate-500' />
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className='p-1'>
-            <PlayerScores playerStats={playerStats} />
+          <div className='dropdown dropdown-top'>
+            <label tabIndex={0} className='btn m-1'>
+              Player Stats
+            </label>
+            <div
+              tabIndex={0}
+              className='dropdown-content z-[1] menu p-2 shadow bg-neutral rounded-box w-auto'
+            >
+              <PlayerScores playerStats={playerStats} />
+            </div>
           </div>
         </div>
       </div>
