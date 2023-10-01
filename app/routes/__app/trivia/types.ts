@@ -35,4 +35,5 @@ export type AnimationAnswer = {
   header: boolean;
   answer: boolean;
   context: boolean;
+  action: boolean;
 };

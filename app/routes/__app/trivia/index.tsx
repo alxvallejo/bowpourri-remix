@@ -60,6 +60,7 @@ const defaultAnswerAnimationState: AnimationAnswer = {
   header: false,
   answer: false,
   context: false,
+  action: false,
 };
 
 export default function TriviaIndex() {
@@ -559,16 +560,16 @@ export default function TriviaIndex() {
       return (
         <div className='container mx-auto'>
           <div className='flex flex-wrap justify-between'>
+            <div className='basis-1/4'>
+              {playerTableCard()}
+              <StandupList standup={standup} />
+            </div>
             <div className='basis-3/4 pr-6'>
               <div className='flex justify-center content-center h-screen'>
                 <button onClick={handleSignIn} className='btn-primary btn'>
                   Sign in to Bowst
                 </button>
               </div>
-            </div>
-            <div className='basis-1/4'>
-              {playerTableCard()}
-              <StandupList standup={standup} />
             </div>
           </div>
         </div>
@@ -598,7 +599,11 @@ export default function TriviaIndex() {
     return (
       <div className='container mx-auto'>
         <div className='flex flex-wrap justify-between'>
-          <div className='basis-3/4 pr-6'>
+          <div className='basis-1/4'>
+            {playerTableCard()}
+            <StandupList standup={standup} />
+          </div>
+          <div className='basis-3/4 pr-6 text-center'>
             <PlayerSpinWheel />
             {correctAnswer && (
               <DisplayAnswer
@@ -612,10 +617,6 @@ export default function TriviaIndex() {
                 setAnswerAnimationState={setAnswerAnimationState}
               />
             )}
-          </div>
-          <div className='basis-1/4'>
-            {playerTableCard()}
-            <StandupList standup={standup} />
           </div>
         </div>
         {optionsModal()}
