@@ -1,6 +1,12 @@
 import Typewriter from 'react-ts-typewriter';
 import { ClientOnly } from 'remix-utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  AnimationAnswer,
+  AnimationSequence,
+  AnimationsComplete,
+  TypeWriteSequenceProps,
+} from './types';
 
 export const TypeWrite = (text: string, delay: number | null = null) => {
   const [start, setStart] = useState(false);
@@ -24,38 +30,62 @@ export const TypeWrite = (text: string, delay: number | null = null) => {
   }
 };
 
-export const TypeWriteSequence = (
-  text: string,
-  name: string,
-  complete: boolean,
-  onComplete: (name: string) => void,
-  delay: number = 0
-) => {
+export const TypeWriteSequence = ({
+  text,
+  name,
+  animationSequence,
+  onComplete,
+  index = 0,
+}: TypeWriteSequenceProps) => {
   const [start, setStart] = useState(false);
-  console.log('delay: ', delay);
-  setTimeout(() => {
-    console.log('setting start to true for ' + name, delay);
-    setStart(true);
-  }, delay * 1000);
+
+  const [complete, setComplete] = useState(
+    animationSequence[index]['complete'] || false
+  );
+
+  // const complete = animationSequence[index]?.['complete'];
+
+  useEffect(() => {
+    if (index === 0) {
+      setStart(true);
+    } else {
+      // If previous index is complete, set start to true
+      let prevIndex = index - 1;
+      if (animationSequence[prevIndex]['complete']) {
+        setStart(true);
+      }
+    }
+    // if (animationSequence[index]['complete']) {
+    //   setComplete(true);
+    // }
+  }, [animationSequence, index]);
+
+  const handleOnFinish = () => {
+    setComplete(true);
+    onComplete(index);
+  };
 
   if (complete) {
-    return <div>{text}</div>;
+    console.log('complete', text);
+    return <span>{text}</span>;
   }
 
   if (start) {
+    // console.log('animationSequence: ', animationSequence);
+    // debugger;
     return (
-      <ClientOnly fallback={<div />}>
+      <ClientOnly fallback={<span />}>
         {() => (
           <Typewriter
             text={text}
             speed={15}
-            onFinished={() => onComplete(name)}
+            onFinished={handleOnFinish}
             cursor={false}
           />
         )}
       </ClientOnly>
     );
   } else {
-    return <div />;
+    return <span />;
   }
 };

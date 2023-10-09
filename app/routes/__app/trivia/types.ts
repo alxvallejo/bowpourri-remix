@@ -23,17 +23,17 @@ export interface Standup {
   players: Player[];
 }
 
-export type AnimationsComplete = {
-  question: boolean;
-  opt1: boolean;
-  opt2: boolean;
-  opt3: boolean;
-  opt4: boolean;
+export type AnimationSequenceItem = {
+  key: string;
+  complete: boolean;
 };
 
-export type AnimationAnswer = {
-  header: boolean;
-  answer: boolean;
-  context: boolean;
-  action: boolean;
+export type AnimationSequence = AnimationSequenceItem[];
+
+export type TypeWriteSequenceProps = {
+  text: string;
+  name: string;
+  animationSequence: AnimationSequence;
+  onComplete: (index: number) => void;
+  index: number;
 };

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import TailwindColor from '../../../../tailwindColor';
 import { TypeWriteSequence } from '../TypeWrite.client';
+import { AnimationSequence } from '../types';
+import { createSequence } from '../utils';
 const tailwindColor = new TailwindColor(null);
 
 const CategoryCard = ({ category, selectedCategory, userData, socket }) => {
@@ -129,46 +131,29 @@ const UserCategoryCard = ({
   );
 };
 
-type AnimationSequence = {
-  key: string;
-  complete: boolean;
-};
-
-const defaultSequence = [
-  {
-    key: 'question',
-    complete: false,
-  },
-  {
-    key: 'opt1',
-    complete: false,
-  },
-  {
-    key: 'opt2',
-    complete: false,
-  },
-  {
-    key: 'opt3',
-    complete: false,
-  },
-  {
-    key: 'opt4',
-    complete: false,
-  },
-];
+const defaultSequence = createSequence([
+  'question',
+  'opt1',
+  'opt2',
+  'opt3',
+  'opt4',
+]);
 
 export const ShowQuestion = ({
   newGame,
   signedIn,
   selectedOption,
   setSelectedOption,
-  animationState,
-  setAnimationState,
 }) => {
-  const [sequence, setSequence] =
-    useState<AnimationSequence[]>(defaultSequence);
-  console.log('animationState: ', animationState);
-  if (!newGame) {
+  const [sequence, setSequence] = useState<AnimationSequence>(defaultSequence);
+  console.log('sequence: ', sequence);
+
+  // useEffect(() => {
+
+  //   setSequence(defaultSequence);
+  // }, []);
+
+  if (!newGame || !sequence) {
     return (
       <div>
         <h2>The game will begin momentarily</h2>
@@ -185,60 +170,44 @@ export const ShowQuestion = ({
       );
     }
 
-    const onComplete = (name: string) => {
-      let newAnimationState = animationState;
-      newAnimationState[name] = true;
-      setAnimationState(newAnimationState);
+    const onComplete = (index: number) => {
+      let newAnimationState = Object.assign({}, sequence);
+      newAnimationState[index]['complete'] = true;
+      setSequence(newAnimationState);
     };
 
     return (
       <div className='prose flex flex-col items-start'>
         Today's question:
         <h3 className='border-r-ghost p-5 text-accent font-mono'>
-          {TypeWriteSequence(
-            newGame.question,
-            'question',
-            animationState['question'],
-            onComplete
-          )}
+          <TypeWriteSequence
+            text={newGame.question}
+            name={'question'}
+            animationSequence={sequence}
+            onComplete={onComplete}
+            index={0}
+          />
         </h3>
         {newGame.options?.map((option, i) => {
           const selected = selectedOption == option;
           const className = selected
             ? `btn btn-primary no-animation font-mono mt-2`
             : `btn btn-neutral no-animation font-mono mt-2`;
-          console.log('i: ', i);
           const animationKey = `opt${i + 1}`;
-          // const startAnimation = i === 0 ? true : animationState[`opt${i + 1}`];
           return (
             <div className='form-control' key={i}>
-              {/* <label className='label cursor-pointer'> */}
-              {/* <input
-                  type='radio'
-                  name='radio-10'
-                  className='radio mr-4 radio-lg radio-accent'
-                  onChange={() => setSelectedOption(option)}
-                  checked={selectedOption == option}
-                />
-                <span className='label-text text-lg'>
-                  
-                </span> */}
               <button
-                // type='checkbox'
-                // aria-label='Checkbox'
                 className={className}
                 onClick={() => setSelectedOption(option)}
-                // checked={selectedOption == option}
               >
-                {TypeWriteSequence(
-                  option,
-                  animationKey,
-                  animationState[animationKey],
-                  onComplete,
-                  i + 1
-                )}
+                <TypeWriteSequence
+                  text={option}
+                  name={animationKey}
+                  animationSequence={sequence}
+                  onComplete={onComplete}
+                  index={i + 1}
+                />
               </button>
-              {/* </label> */}
             </div>
           );
         })}

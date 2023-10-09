@@ -159,7 +159,6 @@ export default function TriviaIndex() {
       ? undefined
       : nextPlayers.find((x) => x.email === nextWinnerEmail);
     console.log('nextSpinner: ', nextSpinner);
-
     console.log('nextPlayers: ', nextPlayers);
     console.log('nextWinnerEmail: ', nextWinnerEmail);
     setStandup({
@@ -202,7 +201,6 @@ export default function TriviaIndex() {
 
     // Refresh animation state
     console.log('refreshing animation state');
-    debugger;
     setAnimationState(defaultAnimationState);
     setAnswerAnimationState(defaultAnswerAnimationState);
   };
@@ -392,38 +390,19 @@ export default function TriviaIndex() {
     if (!gameComplete && signedIn && selectedCategory) {
       return (
         <button
-          className='btn-primary btn'
+          className='btn-primary btn btn-block mt-3'
           onClick={() => {
             setNewGame(null);
             if (selectedCategory) {
-              socket.emit('refreshGame', name, selectedCategory);
+              socket.emit('tryAgain', selectedCategory);
             }
           }}
         >
-          New Game
+          New Question
         </button>
       );
     }
     return <div />;
-  };
-
-  const GameActions = () => {
-    const name = userData?.name || userData?.email;
-    return (
-      <div className='card mt-4 w-full bg-neutral md:basis-1/4'>
-        {/* <button className="btn-secondary btn" onClick={handleSignOut}>
-          Sign Out
-        </button> */}
-
-        {gameComplete && (
-          <button className='btn-primary btn' onClick={handlePlayAgain}>
-            Play Again
-          </button>
-        )}
-
-        <NewGameButton />
-      </div>
-    );
   };
 
   const selectCategory = () => {
@@ -476,32 +455,10 @@ export default function TriviaIndex() {
               signedIn={signedIn}
               selectedOption={selectedOption}
               setSelectedOption={setSelectedOption}
-              animationState={animationState}
-              setAnimationState={setAnimationState}
             />
           ) : (
             <div />
           )}
-          {/* {newGame && unanswered.length > 0 && (
-            <div>Waiting on: {unanswered.map((p, i) => p.name).join(', ')}</div>
-          )} */}
-          {/* <ShowAnswer /> */}
-
-          {/* <ClientOnly fallback={<div />}>
-            {() => (
-              <SpinWheel
-                userData={userData}
-                standup={standup}
-                themeColors={themeColors}
-                handleSpin={handleSpin}
-                onStopSpin={onStopSpin}
-              />
-            )}
-          </ClientOnly> */}
-
-          {/* <div className='relative prose lg:prose-xl text-success'>
-            <h1>{winningPlayer?.name}</h1>
-          </div> */}
         </div>
       </div>
     );
@@ -525,9 +482,6 @@ export default function TriviaIndex() {
     const newVal = e.target.value;
     setOptionMinPlayers(newVal);
   };
-
-  const playerScoreModalClass = showPlayerScores ? 'modal modal-open' : 'modal';
-  // const optionsModalClass = showOptions ? 'modal modal-open' : 'modal';
 
   const yourCategories = userCategories?.[userData?.name];
 
@@ -563,6 +517,7 @@ export default function TriviaIndex() {
             <div className='basis-1/4'>
               {playerTableCard()}
               <StandupList standup={standup} />
+              <NewGameButton />
             </div>
             <div className='basis-3/4 pr-6'>
               <div className='flex justify-center content-center h-screen'>
@@ -602,8 +557,11 @@ export default function TriviaIndex() {
           <div className='basis-1/4'>
             {playerTableCard()}
             <StandupList standup={standup} />
+            <div className='w-full'>
+              <NewGameButton />
+            </div>
           </div>
-          <div className='basis-3/4 pr-6 text-center'>
+          <div className='basis-3/4 pr-6'>
             <PlayerSpinWheel />
             {correctAnswer && (
               <DisplayAnswer

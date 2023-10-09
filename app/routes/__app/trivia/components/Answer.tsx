@@ -1,5 +1,14 @@
-import { Player, Standup, AnimationAnswer } from '../types';
+import { useState } from 'react';
+import { Player, Standup, AnimationAnswer, AnimationSequence } from '../types';
 import { TypeWriteSequence, TypeWrite } from '../TypeWrite.client';
+import { createSequence } from '../utils';
+
+const defaultSequence = createSequence([
+  'header',
+  'answer',
+  'context',
+  'action',
+]);
 
 export const DisplayAnswer = ({
   correctAnswer,
@@ -11,6 +20,7 @@ export const DisplayAnswer = ({
   answerAnimationState,
   setAnswerAnimationState,
 }) => {
+  const [sequence, setSequence] = useState<AnimationSequence>(defaultSequence);
   const showImg = () => {
     if (answerImg) {
       const { image, keywords } = answerImg;
@@ -32,14 +42,13 @@ export const DisplayAnswer = ({
 
   const { nextSpinner } = standup;
 
-  const onComplete = (name: string) => {
-    let newAnimationState = answerAnimationState;
-    newAnimationState[name] = true;
-    console.log('newAnimationState: ', newAnimationState);
-    setAnswerAnimationState(newAnimationState);
+  const onComplete = (index: number) => {
+    let newAnimationState = Object.assign({}, sequence);
+    newAnimationState[index]['complete'] = true;
+    setSequence(newAnimationState);
   };
 
-  const showNextGame = () => {
+  const ShowNextGame = () => {
     if (nextSpinner) {
       return (
         <div className='text-center mt-3'>
@@ -51,10 +60,13 @@ export const DisplayAnswer = ({
     } else {
       return (
         <div className='text-lg'>
-          {TypeWrite(
-            'Bowpourri has concluded. You may carry on with your day.',
-            7
-          )}
+          <TypeWriteSequence
+            text={'Bowpourri has concluded. You may carry on with your day.'}
+            name={'action'}
+            animationSequence={sequence}
+            onComplete={onComplete}
+            index={3}
+          />
         </div>
       );
     }
@@ -71,45 +83,47 @@ export const DisplayAnswer = ({
     <div className='prose lg:prose-md my-6 mx-16'>
       {isCorrect ? (
         <h2 className='text-success'>
-          {TypeWriteSequence(
-            'Congratulations!',
-            'header',
-            answerAnimationState['header'],
-            onComplete
-          )}
+          <TypeWriteSequence
+            text={'Congratulations!'}
+            name={'header'}
+            animationSequence={sequence}
+            onComplete={onComplete}
+            index={0}
+          />
         </h2>
       ) : (
         <h2 className='text-info'>
-          {TypeWriteSequence(
-            'Sorry, you are incorrect.',
-            'header',
-            answerAnimationState['header'],
-            onComplete
-          )}
+          <TypeWriteSequence
+            text={'Sorry, you are incorrect.'}
+            name={'header'}
+            animationSequence={sequence}
+            onComplete={onComplete}
+            index={0}
+          />
         </h2>
       )}
 
       <div>
         Correct Answer:{' '}
-        {TypeWriteSequence(
-          correctAnswer.option,
-          'answer',
-          answerAnimationState['answer'],
-          onComplete,
-          3
-        )}
+        <TypeWriteSequence
+          text={correctAnswer.option}
+          name={'answer'}
+          animationSequence={sequence}
+          onComplete={onComplete}
+          index={1}
+        />
       </div>
       <div className='text-lg'>
-        {TypeWriteSequence(
-          answerContext,
-          'context',
-          answerAnimationState['context'],
-          onComplete,
-          5
-        )}
+        <TypeWriteSequence
+          text={answerContext}
+          name={'context'}
+          animationSequence={sequence}
+          onComplete={onComplete}
+          index={2}
+        />
       </div>
       {showImg()}
-      {showNextGame()}
+      <ShowNextGame />
     </div>
   );
 };
