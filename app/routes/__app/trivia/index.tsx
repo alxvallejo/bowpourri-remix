@@ -26,6 +26,12 @@ import {
   Standup,
   AnimationsComplete,
   AnimationAnswer,
+  GamePublic,
+  UserCategories,
+  UserCategory,
+  GameRules,
+  PlayerStat,
+  SignInData,
 } from './types';
 
 import {
@@ -44,8 +50,12 @@ const tableContentColor = 'text-neutral-content';
 const tailwindColor = new TailwindColor(null);
 
 const defaultStandup = {
-  // players:
+  categorySelector: undefined,
   isBowpourri: false,
+  isComplete: false,
+  nextSpinner: undefined,
+  nextWinnerEmail: null,
+  players: [],
 };
 
 const defaultAnimationState: AnimationsComplete = {
@@ -67,27 +77,27 @@ export default function TriviaIndex() {
   const user = useUser();
   // console.log('user: ', user);
   const [showSpinWheel, setShowSpinWheel] = useState(true);
-  const [userData, setUserData] = useState();
+  const [userData, setUserData] = useState<SignInData>();
   const [signedIn, setSignedIn] = useState(false);
-  const [players, setPlayers] = useState([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [gameComplete, setGameComplete] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState();
+  const [selectedCategory, setSelectedCategory] = useState<string>();
   // const [categorySelector, setCategorySelector] = useState();
-  const [userCategories, setUserCategories] = useState([]);
+  const [userCategories, setUserCategories] = useState<UserCategories>();
   const [yesterdaysWinner, setYesterdaysWinner] = useState();
-  const [newGame, setNewGame] = useState();
+  const [newGame, setNewGame] = useState<GamePublic>();
   const [newGameError, setNewGameError] = useState();
   const [playerScores, setPlayerScores] = useState();
   const [playerScoreError, setPlayerScoreError] = useState();
   const [showPlayerScores, setShowPlayerScores] = useState(false);
   const [showBowpourriStart, setShowBowpourriStart] = useState(false);
-  const [playerStats, setPlayerStats] = useState();
+  const [playerStats, setPlayerStats] = useState<PlayerStat[]>();
   const [selectedOption, setSelectedOption] = useState();
   const [countdownCompleted, setCountdownCompleted] = useState(false);
   const [correctAnswer, setCorrectAnswer] = useState();
-  const [minPlayers, setMinPlayers] = useState();
+  const [minPlayers, setMinPlayers] = useState<number>();
   const [showOptions, setShowOptions] = useState(false);
-  const [optionMinPlayers, setOptionMinPlayers] = useState();
+  const [optionMinPlayers, setOptionMinPlayers] = useState<number>();
   const [answerContext, setAnswerContext] = useState();
   const [countdownSeconds, setCountdownSeconds] = useState(15);
   const [standup, setStandup] = useState<Standup>(defaultStandup);
@@ -100,7 +110,7 @@ export default function TriviaIndex() {
 
   const { socket, currentTheme } = useOutletContext();
 
-  const onSignOut = (socketId) => {
+  const onSignOut = (socketId: string) => {
     // Remove the corresponding player
     const newPlayers = players.filter((x) => x.socketId !== socketId);
     setPlayers(newPlayers);
@@ -123,7 +133,7 @@ export default function TriviaIndex() {
   };
 
   // Inbound
-  const handleRefreshWheel = (players, selectedSpinner) => {
+  const handleRefreshWheel = (players: Player[], selectedSpinner: Player) => {
     console.log('selectedSpinner: ', selectedSpinner);
     console.log('handleRefreshWheel: ', players);
 
@@ -165,15 +175,10 @@ export default function TriviaIndex() {
       ...standup,
       players: nextPlayers,
       nextWinnerEmail,
-      // nextWinnerIndex,
       nextSpinner,
       isBowpourri: nextWinnerEmail === 'bowpourri',
       categorySelector,
     });
-    // if (isBowpourri) {
-    //   console.log('setting isBowpourri to true');
-    //   setShowBowpourriStart(true);
-    // }
     console.log('setting isBowpourri to true');
     setShowBowpourriStart(true);
   };
@@ -188,16 +193,16 @@ export default function TriviaIndex() {
     setShowPlayerScores(false);
     // setSignedIn(false);
     setGameComplete(false);
-    setSelectedCategory();
-    setNewGame();
-    setNewGameError();
+    setSelectedCategory(undefined);
+    setNewGame(undefined);
+    setNewGameError(undefined);
     setPlayers(newPlayers);
-    setPlayerScores();
-    setPlayerScoreError();
-    setSelectedOption();
+    setPlayerScores(undefined);
+    setPlayerScoreError(undefined);
+    setSelectedOption(undefined);
     setCountdownCompleted(false);
-    setCorrectAnswer();
-    setAnswerImg();
+    setCorrectAnswer(undefined);
+    setAnswerImg(undefined);
 
     // Refresh animation state
     console.log('refreshing animation state');
@@ -210,7 +215,7 @@ export default function TriviaIndex() {
     handlePlayAgain();
   };
 
-  const handleCategory = (name, newCategory) => {
+  const handleCategory = (name: string, newCategory: string) => {
     console.log('newCategory: ', newCategory);
     // setCategorySelector(name);
     setSelectedCategory(newCategory);
@@ -221,7 +226,10 @@ export default function TriviaIndex() {
     setPlayerScores(userScores);
   };
 
-  const handlePlayerStats = async (stats, gameFinished: boolean = false) => {
+  const handlePlayerStats = async (
+    stats: PlayerStat[],
+    gameFinished: boolean = false
+  ) => {
     setPlayerStats(stats);
     if (gameFinished) {
       setShowPlayerScores(true);
@@ -229,15 +237,14 @@ export default function TriviaIndex() {
     }
   };
 
-  const handleUserCategories = (cats) => {
-    const groups = cats.reduce((groups, item) => {
+  const handleUserCategories = (cats: UserCategory[]) => {
+    const groups: UserCategories = cats.reduce((groups, item) => {
       const group = groups[item.created_by] || [];
       group.push(item);
       groups[item.created_by] = group;
       return groups;
     }, {});
     setUserCategories(groups);
-    console.log('groups: ', groups);
   };
 
   useEffect(() => {
@@ -246,13 +253,13 @@ export default function TriviaIndex() {
     }
   }, [playerStats]);
 
-  const handleNewGame = (newGame) => {
+  const handleNewGame = (newGame: GamePublic) => {
     console.log('newGame: ', newGame);
     setSelectedCategory(newGame.category);
     setNewGame(newGame);
   };
 
-  const handleGameRules = (rules) => {
+  const handleGameRules = (rules: GameRules) => {
     console.log('rules: ', rules);
     if (rules) {
       setMinPlayers(rules?.min_players);
@@ -260,7 +267,7 @@ export default function TriviaIndex() {
     }
   };
 
-  const handleSetPlayers = (newPlayers) => {
+  const handleSetPlayers = (newPlayers: Player[]) => {
     console.log('handling NEW PLAYERS: ', newPlayers);
     setPlayers(newPlayers);
   };
@@ -338,61 +345,13 @@ export default function TriviaIndex() {
     }
   };
 
-  const handleAnswer = () => {
-    if (correctAnswer) {
-      return (
-        <DisplayAnswer
-          correctAnswer={correctAnswer}
-          answerImg={answerImg}
-          selectedOption={selectedOption}
-          answerContext={answerContext}
-          standup={standup}
-          handlePlayAgain={handlePlayAgain}
-          answerAnimationState={answerAnimationState}
-          setAnswerAnimationState={setAnswerAnimationState}
-        />
-      );
-    } else {
-      return <div>Letting you change your mind for {seconds} seconds...</div>;
-    }
-  };
-
-  const ShowAnswer = () => {
-    if (newGame) {
-      if (unanswered.length > 0) {
-        return (
-          <div>Waiting on: {unanswered.map((p, i) => p.name).join(', ')}</div>
-        );
-      } else if (correctAnswer) {
-        return (
-          <DisplayAnswer
-            correctAnswer={correctAnswer}
-            answerImg={answerImg}
-            selectedOption={selectedOption}
-            answerContext={answerContext}
-            standup={standup}
-            handlePlayAgain={handlePlayAgain}
-            answerAnimationState={answerAnimationState}
-            setAnswerAnimationState={setAnswerAnimationState}
-          />
-        );
-      } else {
-        return <div>Waiting on other players...</div>;
-      }
-    } else {
-      return <div />;
-    }
-  };
-
-  const unanswered = players.filter((x) => !x.answered);
-
   const NewGameButton = () => {
     if (!gameComplete && signedIn && selectedCategory) {
       return (
         <button
           className='btn-primary btn btn-block mt-3'
           onClick={() => {
-            setNewGame(null);
+            setNewGame(undefined);
             if (selectedCategory) {
               socket.emit('tryAgain', selectedCategory);
             }
@@ -427,9 +386,12 @@ export default function TriviaIndex() {
   };
 
   const PlayerSpinWheel = () => {
-    const [winningPlayer, setWinningPlayer] = useState<Player>();
-    const { nextSpinner, nextWinnerEmail, isComplete, categorySelector } =
-      standup;
+    const {
+      nextSpinner,
+      nextWinnerEmail,
+      isComplete,
+      categorySelector,
+    }: Standup = standup;
     console.log('categorySelector: ', categorySelector);
 
     if (!players || players.length < 1) {
@@ -469,7 +431,7 @@ export default function TriviaIndex() {
     );
   };
 
-  const handleSaveCategory = async (category) => {
+  const handleSaveCategory = async (category: string) => {
     if (!userData?.name) {
       console.log('no userData', userData);
     }
@@ -483,12 +445,12 @@ export default function TriviaIndex() {
     }
   };
 
-  const handleMinPlayerOptionUpdate = (e) => {
+  const handleMinPlayerOptionUpdate = (e: { target: { value: any } }) => {
     const newVal = e.target.value;
     setOptionMinPlayers(newVal);
   };
 
-  const yourCategories = userCategories?.[userData?.name];
+  const yourCategories = userData?.name ? userCategories?.[userData.name] : [];
 
   const optionsModal = () => {
     return (
