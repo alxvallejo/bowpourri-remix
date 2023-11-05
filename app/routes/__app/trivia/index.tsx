@@ -396,6 +396,11 @@ export default function TriviaIndex() {
             if (selectedCategory) {
               socket.emit('tryAgain', selectedCategory);
             }
+
+            // Refresh animation state
+            console.log('refreshing animation state');
+            setAnimationState(defaultAnimationState);
+            setAnswerAnimationState(defaultAnswerAnimationState);
           }}
         >
           New Question

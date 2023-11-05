@@ -146,12 +146,6 @@ export const ShowQuestion = ({
   setSelectedOption,
 }) => {
   const [sequence, setSequence] = useState<AnimationSequence>(defaultSequence);
-  console.log('sequence: ', sequence);
-
-  // useEffect(() => {
-
-  //   setSequence(defaultSequence);
-  // }, []);
 
   if (!newGame || !sequence) {
     return (

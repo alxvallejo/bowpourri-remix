@@ -9,45 +9,7 @@ import { useUser } from '~/utils';
 // import { getNoteListItems } from '~/models/note.server';
 import io, { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-
-const themeList = [
-  {
-    value: 'garden',
-    label: 'Garden',
-  },
-  {
-    value: 'aqua',
-    label: 'Aqua',
-  },
-  {
-    value: 'winter',
-    label: 'Winter',
-  },
-  {
-    value: 'cupcake',
-    label: 'Cupcake',
-  },
-  {
-    value: 'synthwave',
-    label: 'Synthwave',
-  },
-  {
-    value: 'emerald',
-    label: 'Emerald',
-  },
-  {
-    value: 'business',
-    label: 'Business',
-  },
-  {
-    value: 'cmyk',
-    label: 'CMYK',
-  },
-  {
-    value: 'dark',
-    label: 'Dark',
-  },
-];
+import { themeList } from '~/styles/themes';
 
 export async function loader({ request }: LoaderArgs) {
   // const userId = await requireUserId(request);

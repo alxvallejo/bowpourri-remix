@@ -1,18 +1,12 @@
 import Typewriter from 'react-ts-typewriter';
 import { ClientOnly } from 'remix-utils';
 import { useState, useEffect } from 'react';
-import {
-  AnimationAnswer,
-  AnimationSequence,
-  AnimationsComplete,
-  TypeWriteSequenceProps,
-} from './types';
+import { TypeWriteSequenceProps } from './types';
 
 export const TypeWrite = (text: string, delay: number | null = null) => {
   const [start, setStart] = useState(false);
   if (delay) {
     setTimeout(() => {
-      console.log('setting start to true for ' + name, delay);
       setStart(true);
     }, delay * 1000);
   } else {
@@ -43,8 +37,6 @@ export const TypeWriteSequence = ({
     animationSequence[index]['complete'] || false
   );
 
-  // const complete = animationSequence[index]?.['complete'];
-
   useEffect(() => {
     if (index === 0) {
       setStart(true);
@@ -55,9 +47,6 @@ export const TypeWriteSequence = ({
         setStart(true);
       }
     }
-    // if (animationSequence[index]['complete']) {
-    //   setComplete(true);
-    // }
   }, [animationSequence, index]);
 
   const handleOnFinish = () => {
@@ -66,13 +55,10 @@ export const TypeWriteSequence = ({
   };
 
   if (complete) {
-    console.log('complete', text);
     return <span>{text}</span>;
   }
 
   if (start) {
-    // console.log('animationSequence: ', animationSequence);
-    // debugger;
     return (
       <ClientOnly fallback={<span />}>
         {() => (

@@ -1,7 +1,7 @@
 export const themeList = [
   {
-    value: 'garden',
-    label: 'Garden',
+    value: 'retro',
+    label: 'Retro',
   },
   {
     value: 'aqua',
@@ -28,11 +28,15 @@ export const themeList = [
     label: 'Business',
   },
   {
-    value: 'cmyk',
-    label: 'CMYK',
+    value: 'halloween',
+    label: 'Halloween',
   },
   {
     value: 'dark',
     label: 'Dark',
+  },
+  {
+    value: 'autumn',
+    label: 'Autumn',
   },
 ];

@@ -1,4 +1,4 @@
-import { PlayerData, Player, Standup } from './types';
+import { PlayerData, Player, Standup } from '../types';
 
 type IProps = {
   standup: Standup;
