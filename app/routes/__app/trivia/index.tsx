@@ -1,5 +1,10 @@
 import { LoaderArgs, json } from '@remix-run/node';
-import { useLoaderData, useOutletContext } from '@remix-run/react';
+import {
+  useLoaderData,
+  useOutletContext,
+  Link,
+  Outlet,
+} from '@remix-run/react';
 import { useState, useEffect } from 'react';
 import { useUser } from '~/utils';
 import Countdown from 'react-countdown';
@@ -39,6 +44,7 @@ import {
   PlayerTableCard,
   PlayerStatus,
 } from './components/PlayerScores';
+import { NewQuestionForm } from './components/NewQuestion';
 
 // console.log('daisyThemes: ', daisyThemes);
 
@@ -107,6 +113,7 @@ export default function TriviaIndex() {
   );
   const [answerAnimationState, setAnswerAnimationState] =
     useState<AnimationAnswer>(defaultAnswerAnimationState);
+  const [showNewQuestionForm, setShowNewQuestionForm] = useState(false);
 
   const { socket, currentTheme } = useOutletContext();
 
@@ -485,12 +492,25 @@ export default function TriviaIndex() {
               {playerTableCard()}
               <StandupList standup={standup} />
               <NewGameButton />
+              <div className='w-full'>
+                <Link
+                  className='btn-primary btn btn-block mt-3'
+                  to='manage-trivia'
+                >
+                  Manage Your Trivia
+                </Link>
+              </div>
             </div>
             <div className='basis-3/4 pr-6'>
-              <div className='flex justify-center content-center h-screen'>
-                <button onClick={handleSignIn} className='btn-primary btn'>
-                  Sign in to Bowst
-                </button>
+              <div className='flex flex-col justify-start content-start h-screen p-5'>
+                <Outlet />
+                <div className='flex-row'>
+                  <button onClick={handleSignIn} className='btn-primary btn'>
+                    Sign in to Bowst
+                  </button>
+                </div>
+
+                <NewQuestionForm />
               </div>
             </div>
           </div>
@@ -529,6 +549,7 @@ export default function TriviaIndex() {
             </div>
           </div>
           <div className='basis-3/4 pr-6'>
+            <Outlet />
             <PlayerSpinWheel />
             {correctAnswer && (
               <DisplayAnswer
