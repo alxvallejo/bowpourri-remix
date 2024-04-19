@@ -510,7 +510,7 @@ export default function TriviaIndex() {
                   </button>
                 </div>
 
-                <NewQuestionForm />
+                {/* <NewQuestionForm /> */}
               </div>
             </div>
           </div>

@@ -63,9 +63,10 @@ export async function action({ request }: ActionArgs) {
   }
 
   const user = await createUser(email, name, password);
+  console.log('user: ', user);
 
   if (!user) {
-    return;
+    return null;
   }
 
   return createUserSession({
