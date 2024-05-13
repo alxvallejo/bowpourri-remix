@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import TailwindColor from '../../../../tailwindColor';
-import { TypeWriteSequence } from '../TypeWrite.client';
 import { AnimationSequence } from '../types';
 import { createSequence } from '../utils';
+import { TypeWriteSequence } from '../typeWrite.client';
 const tailwindColor = new TailwindColor(null);
 
 const CategoryCard = ({ category, selectedCategory, userData, socket }) => {
