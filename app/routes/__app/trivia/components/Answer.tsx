@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Player, Standup, AnimationAnswer, AnimationSequence } from '../types';
-import { TypeWriteSequence, TypeWrite } from '../TypeWrite.client';
+import { TypeWriteSequence, TypeWrite } from '../typeWrite.client';
 import { createSequence } from '../utils';
 
 const defaultSequence = createSequence([
